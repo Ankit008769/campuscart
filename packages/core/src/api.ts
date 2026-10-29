@@ -125,7 +125,7 @@ export async function requestAccountDeletion(client: CampusClient) {
   if (error) throw error;
 }
 
-/** Which app a push token belongs to; the student and shop apps are separate Expo projects. */
+/** Which side of the app a push token gets messages for: 'consumer' (students) or 'merchant' (shops). */
 export type PushApp = 'consumer' | 'merchant';
 
 /** Saves this phone's Expo push token for the signed-in person, taking it over from any other account. */

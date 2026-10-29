@@ -4,23 +4,39 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
-import { useAuth } from '@/lib/auth';
+import { useAuth, type Side } from '@/lib/auth';
+
+// The first screen of the app: students and shops sign in here, then the app opens their side.
+const CHOICES: { side: Side; title: string; hint: string }[] = [
+  {
+    side: 'student',
+    title: "I'm a student",
+    hint: 'Order from campus shops. Use your @nith.ac.in Google account.',
+  },
+  {
+    side: 'shop',
+    title: 'I run a shop',
+    hint: 'Take orders for your shop. Use the Google account the CampusCart team approved.',
+  },
+];
 
 export default function SignInScreen() {
-  const { signIn, authError } = useAuth();
-  const [busy, setBusy] = useState(false);
+  const { session, signIn, authError } = useAuth();
+  const [busy, setBusy] = useState<Side | null>(null);
   const [localError, setError] = useState<string | null>(null);
   const error = localError ?? authError;
+  // Signed in, and the app is reading which side this account belongs to.
+  const opening = !!session;
 
-  async function onContinue() {
-    setBusy(true);
+  async function onContinue(side: Side) {
+    setBusy(side);
     setError(null);
     try {
-      await signIn();
+      await signIn(side);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-in failed. Please try again.');
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -32,17 +48,43 @@ export default function SignInScreen() {
           <Text style={styles.tagline}>Campus shops, delivered to your hostel.</Text>
         </View>
 
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onContinue}
-            disabled={busy}
-            style={({ pressed }) => [styles.button, (pressed || busy) && styles.buttonPressed]}>
-            {busy ? <ActivityIndicator color={Brand.ink} /> : <Text style={styles.buttonText}>Continue with Google</Text>}
-          </Pressable>
-          <Text style={styles.hint}>Use your @nith.ac.in college account.</Text>
-          {error && <Text style={styles.error}>{error}</Text>}
-        </View>
+        {opening ? (
+          <View style={styles.opening}>
+            <ActivityIndicator color={Brand.ink} />
+            <Text style={styles.question}>Opening CampusCart…</Text>
+          </View>
+        ) : (
+          <View style={styles.actions}>
+            <Text style={styles.question}>How do you use CampusCart?</Text>
+            {CHOICES.map(({ side, title, hint }) => {
+              const shop = side === 'shop';
+              return (
+                <Pressable
+                  key={side}
+                  accessibilityRole="button"
+                  accessibilityHint={hint}
+                  onPress={() => onContinue(side)}
+                  disabled={busy !== null}
+                  style={({ pressed }) => [
+                    styles.choice,
+                    shop && styles.choiceShop,
+                    (pressed || busy === side) && styles.choicePressed,
+                  ]}>
+                  <View style={styles.choiceText}>
+                    <Text style={[styles.choiceTitle, shop && styles.onGreen]}>{title}</Text>
+                    <Text style={[styles.choiceHint, shop && styles.onGreen]}>{hint}</Text>
+                  </View>
+                  {busy === side ? (
+                    <ActivityIndicator color={shop ? '#ffffff' : Brand.ink} />
+                  ) : (
+                    <Text style={[styles.choiceGo, shop && styles.onGreen]}>Continue with Google</Text>
+                  )}
+                </Pressable>
+              );
+            })}
+            {error && <Text style={styles.error}>{error}</Text>}
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -72,28 +114,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 600,
   },
-  actions: {
+  opening: {
+    alignItems: 'center',
     gap: Spacing.two,
+    marginBottom: Spacing.six,
+  },
+  actions: {
+    gap: Spacing.three,
     marginBottom: Spacing.four,
   },
-  button: {
-    backgroundColor: '#ffffff',
-    borderRadius: Radius.medium,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-  },
-  buttonPressed: {
-    opacity: 0.7,
-  },
-  buttonText: {
+  question: {
     color: Brand.ink,
     fontSize: 16,
     fontWeight: 700,
   },
-  hint: {
+  choice: {
+    backgroundColor: '#ffffff',
+    borderRadius: Radius.medium,
+    padding: Spacing.three,
+    gap: Spacing.three,
+  },
+  choiceShop: {
+    backgroundColor: Brand.green,
+  },
+  choicePressed: {
+    opacity: 0.7,
+  },
+  choiceText: {
+    gap: Spacing.one,
+  },
+  choiceTitle: {
+    color: Brand.ink,
+    fontSize: 20,
+    fontWeight: 800,
+  },
+  choiceHint: {
     color: Brand.ink,
     fontSize: 14,
-    textAlign: 'center',
+  },
+  choiceGo: {
+    color: Brand.ink,
+    fontSize: 16,
+    fontWeight: 700,
+  },
+  onGreen: {
+    color: '#ffffff',
   },
   error: {
     color: Brand.red,

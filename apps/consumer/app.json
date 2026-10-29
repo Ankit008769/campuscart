@@ -27,11 +27,20 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": "CampusCart uses the camera so shops can take photos of their menu items.",
+          "photosPermission": "CampusCart opens your photos so shops can pick pictures of their menu items.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#1A9E4B",
-          "defaultChannel": "orders"
+          "defaultChannel": "orders",
+          "sounds": ["./assets/sounds/new_order.wav"]
         }
       ],
       [
@@ -50,6 +59,23 @@
           "isAndroidBackgroundLocationEnabled": false,
           "isIosBackgroundLocationEnabled": false,
           "isAndroidForegroundServiceEnabled": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "CampusCart uses the camera so shops can take photos of menu items and read barcodes when they restock.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
         }
       ]
     ],

@@ -8,7 +8,6 @@
   ],
   "scripts": {
     "consumer": "npm run start -w @campuscart/consumer",
-    "merchant": "npm run start -w @campuscart/merchant",
     "admin": "npm run dev -w @campuscart/admin",
     "db:push": "npm run push -w @campuscart/supabase",
     "db:types": "npm run types -w @campuscart/supabase",

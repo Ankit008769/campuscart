@@ -94,14 +94,14 @@ export default function CatalogScreen() {
                   Catalog
                 </ThemedText>
                 {shop && (
-                  <Pressable accessibilityRole="button" onPress={() => router.push('/scan')}>
+                  <Pressable accessibilityRole="button" onPress={() => router.push('/partner/scan')}>
                     <ThemedText type="linkPrimary">Scan</ThemedText>
                   </Pressable>
                 )}
                 {shop && (
                   <Pressable
                     accessibilityRole="button"
-                    onPress={() => router.push({ pathname: '/item/[id]', params: { id: 'new' } })}
+                    onPress={() => router.push({ pathname: '/partner/item/[id]', params: { id: 'new' } })}
                     style={styles.addButton}>
                     <Text style={styles.addText}>+ Add item</Text>
                   </Pressable>
@@ -147,7 +147,7 @@ export default function CatalogScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityHint="Opens the item editor"
-                onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } })}
+                onPress={() => router.push({ pathname: '/partner/item/[id]', params: { id: item.id } })}
                 style={styles.row}>
                 {item.image_path ? (
                   <ProductImage path={item.image_path} style={styles.photo} label={item.name} />
