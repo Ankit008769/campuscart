@@ -12,7 +12,7 @@ import { registerForOrderPushes, useOpenTappedOrder } from '@/lib/push';
 // A crash in any screen shows AppError with a Try again button instead of a blank page.
 export { AppError as ErrorBoundary };
 
-// Keep the splash screen up until we know whether a student is already signed in.
+// Keep the splash screen up until we know who is signed in and which side of the app is theirs.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -29,7 +29,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session, loading } = useAuth();
+  const { session, side, loading } = useAuth();
   const userId = session?.user.id;
 
   useEffect(() => {
@@ -37,16 +37,18 @@ function RootNavigator() {
   }, [loading]);
 
   useEffect(() => {
-    if (!userId) return;
-    logStep('app_open');
-    registerForOrderPushes().catch((e: unknown) => console.warn('Could not turn on order notifications', e));
-  }, [userId]);
-  useOpenTappedOrder(!!session);
+    if (!userId || !side) return;
+    if (side === 'student') logStep('app_open');
+    registerForOrderPushes(side).catch((e: unknown) => console.warn('Could not turn on order notifications', e));
+  }, [userId, side]);
+  useOpenTappedOrder(side);
 
+  // Signed out (or still finding out the side) shows sign-in, where people pick student or shop.
+  // Students get the ordering screens; shop owners and counter staff get the shop screens under /partner.
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={!!session}>
+        <Stack.Protected guard={side === 'student'}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="shop/[id]" options={{ headerShown: true, title: '' }} />
           <Stack.Screen name="cart" options={{ headerShown: true, title: 'Your cart' }} />
@@ -59,7 +61,10 @@ function RootNavigator() {
           <Stack.Screen name="group/[id]" options={{ headerShown: true, title: 'Group order' }} />
           <Stack.Screen name="group/join/[code]" options={{ headerShown: true, title: 'Joining…' }} />
         </Stack.Protected>
-        <Stack.Protected guard={!session}>
+        <Stack.Protected guard={side === 'shop'}>
+          <Stack.Screen name="partner" />
+        </Stack.Protected>
+        <Stack.Protected guard={!side}>
           <Stack.Screen name="sign-in" />
         </Stack.Protected>
       </Stack>

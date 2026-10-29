@@ -1,13 +1,12 @@
 # CampusCart
 
-Blinkit-style ordering for the shops inside NIT Hamirpur: a student app, a shop (merchant) app and a web admin panel on one Supabase backend. The roadmap and the numbered build sessions (0.1, 1.2, …) live in the team's doc "CampusCart Roadmap — NIT Hamirpur", tab "Phase-by-phase build plan". Name branches after the session, e.g. `p1-s02-order-engine`.
+Blinkit-style ordering for the shops inside NIT Hamirpur: one phone app with a student side and a shop (merchant) side, plus a web admin panel, on one Supabase backend. The roadmap and the numbered build sessions (0.1, 1.2, …) live in the team's doc "CampusCart Roadmap — NIT Hamirpur", tab "Phase-by-phase build plan". Name branches after the session, e.g. `p1-s02-order-engine`.
 
 ## Layout
 
 | Path | What it is |
 | --- | --- |
-| `apps/consumer` | Student app (Expo, expo-router), Android package `com.campuscart.student` |
-| `apps/merchant` | Shop app (Expo, expo-router), Android package `com.campuscart.merchant` |
+| `apps/consumer` | The CampusCart app (Expo, expo-router), Android package `com.campuscart.student`. Student screens at the root, shop screens under `src/app/partner/` |
 | `apps/admin` | Web admin panel (Next.js) |
 | `packages/core` | Shared business rules (order state machine, bill preview, money, shop hours, CSV menu parsing) and the typed Supabase calls every app uses (`api.ts`, `catalog.ts`; admin-only calls in `admin.ts`) |
 | `packages/ui` | Shared React Native pieces: brand tokens, `StatusBadge` |
@@ -17,8 +16,7 @@ Blinkit-style ordering for the shops inside NIT Hamirpur: a student app, a shop 
 
 ```bash
 npm install          # one install for every workspace
-npm run consumer     # Expo dev server for the student app
-npm run merchant     # Expo dev server for the shop app
+npm run consumer     # Expo dev server for the app (student and shop sides)
 npm run admin        # Next.js dev server for the admin panel
 npm run typecheck    # every workspace
 npm run lint
@@ -43,13 +41,14 @@ Run `npm run db:types` after every schema change and commit the result; `package
 - Expo SDK 58 and Next.js 16 are newer than most training data. Read `apps/consumer/AGENTS.md` (Expo) or `apps/admin/AGENTS.md` (Next.js) and the docs they point to before using their APIs.
 - Never edit `android/` or `ios/`: Expo generates them. Configure native behaviour in `app.json` and config plugins.
 - Keep exactly one React and one React Native version in the repo (pinned by `overrides` in the root `package.json`). Check with `npm ls react-native`.
-- Shops, menus and photos are live data: two real shops imported by `supabase/migrations/20261028100200_campus_menus.sql`, photos in the public `product-photos` storage bucket. Every stock photo keeps its `photo_credit` and `photo_source_url`; most are CC BY/BY-SA, so the credits must stay visible wherever photos show (`PhotoCredits`). Shops upload their own photos from the shop app to `shops/<shop id>/` in the bucket; `save_product` clears the stock credit when the photo changes. Only a shop sets `is_veg` (in its item editor); imports and scripts leave it null.
+- Shops, menus and photos are live data: two real shops imported by `supabase/migrations/20261028100200_campus_menus.sql`, photos in the public `product-photos` storage bucket. Every stock photo keeps its `photo_credit` and `photo_source_url`; most are CC BY/BY-SA, so the credits must stay visible wherever photos show (`PhotoCredits`). Shops upload their own photos from the app's shop side to `shops/<shop id>/` in the bucket; `save_product` clears the stock credit when the photo changes. Only a shop sets `is_veg` (in its item editor); imports and scripts leave it null.
 - Shop catalogs change through `save_product` (an item and all its sizes in one transaction, run as the caller so row-level security applies) and `set_category_in_stock`. Price may never exceed MRP; the database refuses it with a message that names the size.
 - No placeholder data is left in the apps: shops, categories and search all come from Supabase. `supabase/seed.sql` still has four sample shops for local `db reset` and db-tests only.
-- Push notifications: each order event queues messages in `push_outbox` (trigger `queue_order_push`); `supabase/functions/send-push` sends them through Expo's push service, one request per app because the two apps are separate Expo projects. Never put the delivery code in a notification. Deploy the function with `npx supabase functions deploy send-push` from `supabase/` after changing it. Android delivery also needs Firebase (FCM) credentials uploaded to each EAS project and `google-services.json` wired into each `app.json`.
+- One app, two sides. The sign-in screen asks "I'm a student" or "I run a shop" (students get the `nith.ac.in` Google hint), but the side that opens comes from `profiles.role`: `merchant_owner` and `merchant_staff` get the shop screens under `src/app/partner/` (`/partner`), everyone else the student screens. `Stack.Protected` in `src/app/_layout.tsx` keeps each side's screens away from the other; row-level security is still what guards the data. Put shop-only screens under `partner/`. The retired CampusCart Partner app (`com.campuscart.merchant`, Expo project `campuscart-partner`) was folded in; its code is in git history.
+- Push notifications: each order event queues messages in `push_outbox` (trigger `queue_order_push`) for one side, `consumer` or `merchant` (`device_tokens.app`); the app registers its token for the signed-in person's side. `supabase/functions/send-push` sends them through Expo's push service, students on the Android channel `orders` and shops on `new-orders` (the new-order alarm); Android fixes a channel's sound once created, hence one channel per side. Expo refuses a request mixing tokens from two Expo projects, so send-push resends such a request per project (old Partner installs are a separate project). Never put the delivery code in a notification. Deploy the function with `npx supabase functions deploy send-push` from `supabase/` after changing it. Android delivery also needs Firebase (FCM) credentials uploaded to the `campuscart` EAS project and `google-services.json` wired into `app.json`.
 - The admin panel signs in with Google in the browser and returns to its own origin, so every address it is served from must be in the Supabase redirect URLs (`config.toml` → `additional_redirect_urls`; `http://localhost:3000` is the site URL). Admins are accounts approved in `allowed_logins` with role `admin`. Admin pages are client components behind `AdminGate`; each `page.tsx` is a thin server file that sets `instant = false` and renders the page from a sibling file.
 - Shop hours live in `shops.hours` as `{"opens","closes","closed_days"}` in Indian time (`packages/core/src/hours.ts`; `within_shop_hours` in SQL). The cron job `close_shops_after_hours` only ever closes a shop that is still marked open after hours; it never opens one.
-- `app_events` feeds the admin funnel report and holds only who, which step, which shop and when. Keep it that way: no search text, device data or location. The student app logs each step once per run through `logStep`.
+- `app_events` feeds the admin funnel report and holds only who, which step, which shop and when. Keep it that way: no search text, device data or location. The student side logs each step once per run through `logStep`.
 - `packages/core` unit tests run with `node --import ./test/resolve-ts.mjs`, so core files import their siblings without an extension, like everywhere else.
 - Riders are students with an approved `riders` row; `profiles.role` stays `student`. `claim_delivery` is a single conditional update, so two riders can never hold one order; keep it that way. Weekly payouts run Monday to Sunday, Indian time.
 - Coupons are checked and priced only by `coupon_discount`, inside `place_order` (the cart's `preview_coupon` calls the same function). Fees are charged on the item total before the discount; a discount never exceeds the items.
@@ -60,7 +59,7 @@ Run `npm run db:types` after every schema change and commit the result; `package
 - Master catalog: every `variants` row is one shop's listing of a `master_products` row (linked automatically by name and size; admins merge duplicates, and the merged name stays an alias). Order items keep their own name and price, so catalog changes never touch old bills.
 - Multi-shop carts: `place_cart` routes lines (`route_cart`, also used by the cart preview) and makes one order per shop under one `carts` row. Only the largest order carries the cart's fees (worked out on the whole cart); if it fails, `reassign_cart_fees` moves them to the largest open order. `place_order` is a thin wrapper around the internal `place_shop_order`; change order creation there.
 - Stock: a size counts stock only when `stock_qty` is set. Orders take from it (and fail if there isn't enough), failed orders return it, and zero means out of stock. `search_logs` keeps search text without who searched; keep it that way.
-- Product photos have 320 px thumbnails at `<folder>/thumbs/<file>` (`thumbPath`). Lists use `ProductImage`, which falls back to the full photo; the shop app uploads both. New stock photos need a thumbnail uploaded beside them.
+- Product photos have 320 px thumbnails at `<folder>/thumbs/<file>` (`thumbPath`). Lists use `ProductImage`, which falls back to the full photo; the shop side uploads both. New stock photos need a thumbnail uploaded beside them.
 - Edge Functions type-check with `npx -y deno@2 check --node-modules-dir=none <absolute path>/index.ts` (no global Deno needed).
 - Before calling a task done: `npm run typecheck`, `npm run lint`, `npm test`, and for app changes either run it on a phone or bundle it with `npx expo export --platform android` **and** `--platform web`. EAS evaluates every route in Node (no `window`) before each build, and only the web export reproduces that locally.
 - Module-level code in the apps must survive running in Node: guard anything that touches `window`, storage or native modules (see `src/lib/supabase.ts`).

@@ -46,12 +46,12 @@ export function TabButton({ children, isFocused, ref: _ref, ...props }: TabTrigg
   );
 }
 
-export function CustomTabList(props: TabListProps) {
+export function CustomTabList({ brand = 'CampusCart', ...props }: TabListProps & { brand?: string }) {
   return (
     <View {...props} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
         <ThemedText type="smallBold" style={styles.brandText}>
-          CampusCart
+          {brand}
         </ThemedText>
 
         {props.children}

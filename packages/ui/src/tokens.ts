@@ -1,4 +1,4 @@
-/** CampusCart brand colours, shared by the consumer and merchant apps. */
+/** CampusCart brand colours, shared by the student and shop sides of the app. */
 export const Brand = {
   yellow: '#FFD23F',
   yellowSoft: '#FFF6D6',
