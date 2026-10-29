@@ -1,0 +1,23 @@
+{
+  "name": "campuscart",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "supabase"
+  ],
+  "scripts": {
+    "consumer": "npm run start -w @campuscart/consumer",
+    "merchant": "npm run start -w @campuscart/merchant",
+    "admin": "npm run dev -w @campuscart/admin",
+    "db:push": "npm run push -w @campuscart/supabase",
+    "db:types": "npm run types -w @campuscart/supabase",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "overrides": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}

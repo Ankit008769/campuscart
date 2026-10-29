@@ -1,0 +1,21 @@
+{
+  "name": "@campuscart/supabase",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "supabase start",
+    "stop": "supabase stop",
+    "reset": "supabase db reset",
+    "push": "supabase db push --linked",
+    "types": "supabase gen types typescript --linked --schema public > ../packages/core/src/database.types.ts",
+    "test": "node --import ../packages/core/test/resolve-ts.mjs --test \"db-tests/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@types/node": "^24.0.0",
+    "supabase": "^2.122.0",
+    "typescript": "~6.0.3"
+  }
+}

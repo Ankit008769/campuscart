@@ -1,0 +1,5 @@
+# Keep LF line endings in the repo so Windows and macOS/Linux teammates produce clean diffs.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
