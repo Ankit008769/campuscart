@@ -3,7 +3,7 @@ import { before, test } from 'node:test';
 
 import type { PGlite } from '@electric-sql/pglite';
 
-import { SHOP, VARIANT, addUser, as, asOwner, createDb, transition, type OrderRow } from './harness.ts';
+import { SHOP, VARIANT, addUser, as, asOwner, createDb, settleOrders, transition, type OrderRow } from './harness.ts';
 
 let db: PGlite;
 let admin: string;
@@ -98,6 +98,7 @@ test('every invalid coupon is refused with its reason, and the order is not plac
 });
 
 test('per-student and total limits hold, and a rejected order gives its use back', async () => {
+  await settleOrders(db, student);
   const first = await order('ONCE');
   await assert.rejects(order('ONCE'), /already used/);
   await as(db, owner, () => transition(db, first.id, 'rejected', { note: 'Out of stock' }));

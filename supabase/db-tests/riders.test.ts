@@ -125,7 +125,15 @@ test('riders never get their own orders, hold two at most, and can give one back
   assert.ok(!(await call(riderB, 'select id from public.list_delivery_offers()')).some((o) => o.id === own.id));
   await assert.rejects(call(riderB, 'select public.claim_delivery($1)', [own.id]), /no longer open/);
 
-  const [first, second, third] = [await deliveryOrder(), await deliveryOrder(), await deliveryOrder()];
+  // A student of their own: Tanya still has orders out with riders from the tests above, and a student
+  // may have at most 3 open checkouts.
+  const neha = await addUser(db, '23bce102@nith.ac.in', 'Neha');
+  await asOwner(db, `update public.profiles set phone = '+919800000102' where id = $1`, [neha]);
+  const order = () =>
+    as(db, neha, () =>
+      placeOrder(db, { shopId: SHOP.general, mode: 'delivery', dropPointId: kailash, items: [{ variant_id: VARIANT.maggi70g, qty: 2 }] }),
+    );
+  const [first, second, third] = [await order(), await order(), await order()];
   for (const o of [first, second, third]) await as(db, owner, () => transition(db, o.id, 'accepted', { prepMinutes: 5 }));
   await call(riderB, 'select public.claim_delivery($1)', [first.id]);
   await call(riderB, 'select public.claim_delivery($1)', [second.id]);

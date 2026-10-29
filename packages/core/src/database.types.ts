@@ -618,6 +618,7 @@ export type Database = {
       }
       group_members: {
         Row: {
+          display_name: string | null
           group_order_id: string
           items: Json
           joined_at: string
@@ -626,6 +627,7 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          display_name?: string | null
           group_order_id: string
           items?: Json
           joined_at?: string
@@ -634,6 +636,7 @@ export type Database = {
           student_id: string
         }
         Update: {
+          display_name?: string | null
           group_order_id?: string
           items?: Json
           joined_at?: string
@@ -1866,6 +1869,10 @@ export type Database = {
         }[]
       }
       can_read_print_file: { Args: { p_name: string }; Returns: boolean }
+      check_open_checkout_limit: {
+        Args: { p_student: string }
+        Returns: undefined
+      }
       can_transition: {
         Args: {
           p_actor: string
