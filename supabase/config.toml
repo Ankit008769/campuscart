@@ -221,7 +221,10 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-enable_signup = true
+# Off: everyone signs in with Google. Left on, anyone could create unconfirmed accounts for any
+# @nith.ac.in address and make the project email those students. Turn it off in the live dashboard
+# too (Authentication → Sign In / Providers → Email).
+enable_signup = false
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true

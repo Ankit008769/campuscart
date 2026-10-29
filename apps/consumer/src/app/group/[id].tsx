@@ -146,7 +146,7 @@ export default function GroupOrderScreen() {
           return (
             <View key={member.student_id} style={styles.row}>
               <ThemedText type="small" style={styles.flex}>
-                {member.profiles?.name || 'A student'}
+                {member.display_name || 'A student'}
                 {member.student_id === group.host_id ? ' (host)' : ''} · {count} {count === 1 ? 'item' : 'items'}
               </ThemedText>
               {member.share_paise !== null && <ThemedText type="small">{formatPaise(member.share_paise)}</ThemedText>}

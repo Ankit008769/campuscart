@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { completeSignInFromUrl, parseAuthRedirect } from './auth.ts';
+import { SIGN_IN_FAILED, completeSignInFromUrl, parseAuthRedirect } from './auth.ts';
 
 function fakeClient(error: Error | null = null) {
   const codes: string[] = [];
@@ -26,7 +26,14 @@ test('reads a refusal from the query or the fragment, decoded', () => {
     parseAuthRedirect('campuscart://?error=access_denied&error_description=Sign+in+with+your+%40nith.ac.in+college+account.'),
     { error: 'Sign in with your @nith.ac.in college account.' },
   );
-  assert.deepEqual(parseAuthRedirect('campuscart://#error=server_error'), { error: 'server_error' });
+  assert.deepEqual(parseAuthRedirect('campuscart://#error=server_error'), { error: SIGN_IN_FAILED });
+});
+
+test('a crafted link cannot put its own words on the sign-in screen', () => {
+  assert.deepEqual(
+    parseAuthRedirect('campuscart://?error_description=Account+suspended.+Pay+%E2%82%B999+to+x%40upi+to+restore'),
+    { error: SIGN_IN_FAILED },
+  );
 });
 
 test('returns null when the link carries neither a code nor an error', () => {

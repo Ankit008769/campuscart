@@ -3,7 +3,7 @@ import { before, test } from 'node:test';
 
 import type { PGlite } from '@electric-sql/pglite';
 
-import { SHOP, VARIANT, addUser, as, asOwner, createDb, dropPointId, transition } from './harness.ts';
+import { SHOP, VARIANT, addUser, as, asOwner, createDb, dropPointId, settleOrders, transition } from './harness.ts';
 
 let db: PGlite;
 let admin: string;
@@ -126,6 +126,7 @@ test('a 3-shop cart makes 3 shop orders, and the cart pays its fees once', async
 test('every mix of rejected shops leaves exactly one open order carrying the fees for what is left', async () => {
   const shops: string[] = [SHOP.general, SHOP.stationery, SHOP.juice];
   for (let mask = 1; mask < 8; mask++) {
+    await settleOrders(db, student);
     const rejected = shops.filter((_, i) => mask & (1 << i));
     const cart = await threeShopCart();
     for (const o of await ordersOf(cart.id)) {
@@ -147,6 +148,7 @@ test('every mix of rejected shops leaves exactly one open order carrying the fee
 });
 
 test('a cart is all or nothing, and only its student sees it', async () => {
+  await settleOrders(db, student);
   const count = async () =>
     (await asOwner<{ n: number }>(db, 'select count(*)::int as n from public.orders where student_id = $1', [student]))[0].n;
   const before = await count();

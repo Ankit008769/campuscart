@@ -142,6 +142,21 @@ export async function transition(
   return result.rows[0];
 }
 
+/**
+ * Hands over a student's open orders (delivered or collected), as if they had picked them up, so a
+ * test that keeps ordering as one student stays under the limit of 3 open checkouts. Orders a rider
+ * is carrying are left alone: their delivery belongs to the rider's tests and payouts.
+ */
+export async function settleOrders(db: PGlite, studentId: string): Promise<void> {
+  await asOwner(
+    db,
+    `update public.orders
+     set status = case when mode = 'pickup' then 'collected' else 'delivered' end::public.order_status, completed_at = now()
+     where student_id = $1 and rider_id is null and status not in ('delivered', 'collected', 'rejected', 'cancelled', 'expired')`,
+    [studentId],
+  );
+}
+
 export async function dropPointId(db: PGlite, name: string): Promise<string> {
   const [row] = await asOwner<{ id: string }>(db, 'select id from public.drop_points where name = $1', [name]);
   return row.id;

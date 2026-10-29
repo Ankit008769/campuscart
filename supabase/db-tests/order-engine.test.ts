@@ -5,7 +5,7 @@ import type { PGlite } from '@electric-sql/pglite';
 
 import { calculateBill } from '../../packages/core/src/bill.ts';
 import { ORDER_STATUSES, canTransition, type OrderActor, type OrderMode } from '../../packages/core/src/orders.ts';
-import { SHOP, VARIANT, addUser, as, asOwner, createDb, dropPointId, placeOrder, transition } from './harness.ts';
+import { SHOP, VARIANT, addUser, as, asOwner, createDb, dropPointId, placeOrder, settleOrders, transition } from './harness.ts';
 
 let db: PGlite;
 let asha: string;
@@ -215,6 +215,7 @@ test('students cancel only before the shop accepts', async () => {
 });
 
 test('shops and admins must give a reason to reject or cancel', async () => {
+  await settleOrders(db, asha);
   const order = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
   await assert.rejects(as(db, generalOwner, () => transition(db, order.id, 'rejected')), /Give a reason/);
   const rejected = await as(db, generalOwner, () => transition(db, order.id, 'rejected', { note: 'Out of Maggi' }));
@@ -228,11 +229,13 @@ test('shops and admins must give a reason to reject or cancel', async () => {
 });
 
 test('other students cannot touch an order, or even learn it exists', async () => {
+  await settleOrders(db, asha);
   const order = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
   await assert.rejects(as(db, ravi, () => transition(db, order.id, 'cancelled')), /Order not found/);
 });
 
 test('orders left unaccepted for 3 minutes expire', async () => {
+  await settleOrders(db, asha);
   const stale = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
   const fresh = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
   await asOwner(db, `update public.orders set placed_at = now() - interval '4 minutes' where id = $1`, [stale.id]);

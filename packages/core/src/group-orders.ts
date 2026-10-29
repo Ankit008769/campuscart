@@ -26,12 +26,12 @@ export async function joinGroupOrder(client: CampusClient, code: string): Promis
   return data;
 }
 
-/** The group with every member, their items and (once placed) their share. */
+/** The group with every member's name, items and (once placed) share. Members never see each other's contact details. */
 export async function getGroupOrder(client: CampusClient, groupId: string) {
   const { data, error } = await client
     .from('group_orders')
     .select(
-      'id, host_id, shop_id, code, closes_at, status, order_id, problem, shops (name), drop_points (name), group_members (student_id, items, share_paise, paid, profiles (name))',
+      'id, host_id, shop_id, code, closes_at, status, order_id, problem, shops (name), drop_points (name), group_members (student_id, display_name, items, share_paise, paid)',
     )
     .eq('id', groupId)
     .single();
