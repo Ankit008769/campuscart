@@ -7,20 +7,26 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+// `tint` is the brand green darkened (light) or lightened (dark) until small text on it passes
+// WCAG AA (4.5:1); Brand.green itself is only for large fills such as buttons and the cart bar.
 export const Colors = {
   light: {
-    text: '#000000',
+    text: '#1C1C1C',
     background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    backgroundElement: '#F2F3F0',
+    backgroundSelected: '#E3E5DF',
+    textSecondary: '#5F6368',
+    tint: '#13793A',
+    border: '#E3E5DF',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#F5F5F2',
+    background: '#0E0F0D',
+    backgroundElement: '#1E201C',
+    backgroundSelected: '#2C2F29',
+    textSecondary: '#B0B4AC',
+    tint: '#4CC97A',
+    border: '#2C2F29',
   },
 } as const;
 

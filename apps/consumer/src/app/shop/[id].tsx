@@ -14,15 +14,19 @@ import {
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, SectionList, StyleSheet, View } from 'react-native';
 
 import { CartBar } from '@/components/cart-bar';
+import { EmptyState } from '@/components/empty-state';
+import { Icon } from '@/components/icon';
 import { PhotoCredits } from '@/components/photo-credits';
 import { ProductImage } from '@/components/product-image';
 import { QtyStepper } from '@/components/qty-stepper';
+import { SkeletonList } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { readCache, writeCache } from '@/lib/cache';
 import { useCart, type CartShop } from '@/lib/cart';
@@ -48,6 +52,7 @@ function sectionsOf(products: Product[]) {
 }
 
 export default function ShopScreen() {
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [menu, setMenu] = useState<Menu | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -101,21 +106,23 @@ export default function ShopScreen() {
     };
   }, [id]);
 
-  if (error) {
+  if (error && !menu) {
     return (
       <ThemedView style={[styles.container, styles.centered]}>
-        <ThemedText type="smallBold">Couldn&apos;t load this menu</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {error}
-        </ThemedText>
+        <EmptyState
+          icon="error"
+          title="Couldn't load this menu"
+          body={error}
+          action={{ label: 'Back to shops', onPress: () => router.back() }}
+        />
       </ThemedView>
     );
   }
 
   if (!menu) {
     return (
-      <ThemedView style={[styles.container, styles.centered]}>
-        <ActivityIndicator />
+      <ThemedView style={[styles.container, styles.content]}>
+        <SkeletonList count={4} label="Loading the menu" />
       </ThemedView>
     );
   }
@@ -145,22 +152,28 @@ export default function ShopScreen() {
               </ThemedText>
               <StatusBadge label={shop.is_open ? 'Open' : 'Closed'} tone={shop.is_open ? 'good' : 'bad'} />
             </View>
-            <ThemedText type="small">
-              {shop.is_open
-                ? `Ready in about ${effectivePrepMinutes(shop)} min`
-                : 'Closed right now. You can still schedule an order for later'}
-              {shop.does_pickup ? ' · Pickup available' : ''}
-            </ThemedText>
-            {hours && (
-              <ThemedText type="small" themeColor="textSecondary">
-                Hours: {describeShopHours(hours)}
+            <View style={styles.row}>
+              <Icon name="clock" size={16} color={theme.textSecondary} />
+              <ThemedText type="smallBold" style={styles.flex}>
+                {shop.is_open
+                  ? `Ready in about ${effectivePrepMinutes(shop)} min`
+                  : 'Closed right now. You can still schedule an order for later'}
+                {shop.does_pickup ? ' · Pickup available' : ''}
               </ThemedText>
+            </View>
+            {hours && (
+              <View style={styles.row}>
+                <Icon name="store" size={16} color={theme.textSecondary} />
+                <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
+                  Open {describeShopHours(hours)}
+                </ThemedText>
+              </View>
             )}
-            {shop.does_delivery && <OrderTogether shopId={shop.id} shopName={shop.name} />}
+            {shop.does_delivery && <OrderTogether shopId={shop.id} />}
           </ThemedView>
         }
         renderSectionHeader={({ section }) => (
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
+          <ThemedText type="section" accessibilityRole="header" style={styles.sectionTitle}>
             {section.title}
           </ThemedText>
         )}
@@ -196,6 +209,7 @@ function ProductRow({
   alerted: ReadonlySet<string>;
   onToggleAlert: (variantId: string) => void;
 }) {
+  const theme = useTheme();
   const cart = useCart();
   const available = product.variants.some((v) => v.in_stock);
 
@@ -219,14 +233,15 @@ function ProductRow({
             {product.name}
           </ThemedText>
           {product.is_veg === false && <StatusBadge label="Non-veg" tone="bad" />}
+          {product.is_veg === true && <StatusBadge label="Veg" tone="good" />}
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ selected: favourite }}
             accessibilityLabel={favourite ? `Remove ${product.name} from favourites` : `Add ${product.name} to favourites`}
             onPress={onToggleFavourite}
-            hitSlop={8}>
-            <Text style={[styles.heart, favourite && styles.heartOn]}>{favourite ? '♥' : '♡'}</Text>
+            hitSlop={12}>
+            <Icon name={favourite ? 'heartFilled' : 'heart'} size={22} color={favourite ? Brand.red : theme.textSecondary} />
           </Pressable>
-            {product.is_veg === true && <StatusBadge label="Veg" tone="good" />}
         </View>
         {!!product.description && (
           <ThemedText type="small" themeColor="textSecondary">
@@ -239,7 +254,7 @@ function ProductRow({
             <View key={variant.id} style={styles.variantRow}>
               <ThemedText type="small" style={styles.flex}>
                 {variant.label ? `${variant.label} · ` : ''}
-                {formatPaise(variant.price_paise)}
+                <ThemedText type="smallBold">{formatPaise(variant.price_paise)}</ThemedText>
               </ThemedText>
               {!variant.in_stock && (
                 <Pressable accessibilityRole="button" onPress={() => onToggleAlert(variant.id)} hitSlop={6}>
@@ -266,7 +281,8 @@ function ProductRow({
 }
 
 /** Starts a group order for the student's wing: everyone adds their own items, one delivery. */
-function OrderTogether({ shopId, shopName }: { shopId: string; shopName: string }) {
+function OrderTogether({ shopId }: { shopId: string }) {
+  const theme = useTheme();
   const { session } = useAuth();
   const [starting, setStarting] = useState(false);
 
@@ -298,19 +314,38 @@ function OrderTogether({ shopId, shopName }: { shopId: string; shopName: string 
   }
 
   return (
-    <Pressable accessibilityRole="button" disabled={starting} onPress={start}>
-      <ThemedText type="linkPrimary">{starting ? 'Starting…' : `Order from ${shopName} together with your wing`}</ThemedText>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityHint="Everyone in your wing adds their own items; one delivery"
+      disabled={starting}
+      onPress={start}
+      style={({ pressed }) => [styles.together, { borderColor: theme.border, backgroundColor: theme.background }, pressed && styles.pressed]}>
+      <Icon name="group" size={20} color={theme.tint} />
+      <View style={styles.flex}>
+        <ThemedText type="smallBold">{starting ? 'Starting…' : 'Order together with your wing'}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Everyone adds their own items, one delivery
+        </ThemedText>
+      </View>
+      <Icon name="chevron" size={20} color={theme.textSecondary} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  heart: {
-    fontSize: 22,
-    color: '#88888899',
+  together: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    minHeight: 56,
+    marginTop: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
-  heartOn: {
-    color: Brand.red,
+  pressed: {
+    opacity: 0.75,
   },
   container: {
     flex: 1,

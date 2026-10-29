@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { PhotoCredits } from '@/components/photo-credits';
 import { ProductImage } from '@/components/product-image';
 import { QtyStepper } from '@/components/qty-stepper';
+import { SectionHeader } from '@/components/section-header';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { routedKey, useCart } from '@/lib/cart';
@@ -30,12 +31,7 @@ export function ProductStrip({ title, subtitle, products }: { title: string; sub
   if (products.length === 0) return null;
   return (
     <View style={styles.wrap}>
-      <ThemedText type="smallBold">{title}</ThemedText>
-      {!!subtitle && (
-        <ThemedText type="small" themeColor="textSecondary">
-          {subtitle}
-        </ThemedText>
-      )}
+      <SectionHeader title={title} subtitle={subtitle} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {products.map((p) => {
           const key = routedKey(p.master_product_id);
