@@ -1869,10 +1869,6 @@ export type Database = {
         }[]
       }
       can_read_print_file: { Args: { p_name: string }; Returns: boolean }
-      check_open_checkout_limit: {
-        Args: { p_student: string }
-        Returns: undefined
-      }
       can_transition: {
         Args: {
           p_actor: string
@@ -1887,6 +1883,10 @@ export type Database = {
         Returns: boolean
       }
       cancel_group_order: { Args: { p_group_id: string }; Returns: undefined }
+      check_open_checkout_limit: {
+        Args: { p_student: string }
+        Returns: undefined
+      }
       claim_batch: {
         Args: { p_drop_point_id: string; p_order_ids: string[] }
         Returns: number
