@@ -45,6 +45,6 @@ Category: Food & Drink. Tags: food delivery, campus, shopping.
 
 ## Contact details
 
-Email: SUPPORT_EMAIL
+Email: admincampuscartnith@gmail.com
 Privacy policy: (Google Sites URL)
 Account deletion: (Google Sites URL)

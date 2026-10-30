@@ -58,7 +58,7 @@ We share data with authorities only when the law requires it.
 - Change your name, mobile number, hostel and room note any time in the app (Account → Your profile).
 - Turn notifications off in your phone's settings.
 - **Delete your account** in the app (Account → Your profile → Delete my account) or by emailing us; see the account deletion page. Your mobile number, hostel and room note are erased at once and the account is closed. Order records stay as described above.
-- You can ask us for a copy of your data, to correct it, or to erase it, under India's Digital Personal Data Protection Act, 2023, by emailing SUPPORT_EMAIL.
+- You can ask us for a copy of your data, to correct it, or to erase it, under India's Digital Personal Data Protection Act, 2023, by emailing admincampuscartnith@gmail.com.
 
 ## Security
 
@@ -75,6 +75,6 @@ If we change this policy, we will update this page and its effective date, and t
 ## Contact and grievance officer
 
 Grievance officer: Ronak Dotasara, Dotasara Agrotech
-Email: SUPPORT_EMAIL
+Email: admincampuscartnith@gmail.com
 
 We reply to privacy requests within 30 days.

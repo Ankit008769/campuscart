@@ -10,7 +10,7 @@ Campus Cart NITH is published on Google Play by Dotasara Agrotech.
 
 ## Without the app
 
-Email **SUPPORT_EMAIL** from the email address you sign in with, with the subject "Delete my account". We confirm by email and close the account within 7 days.
+Email **admincampuscartnith@gmail.com** from the email address you sign in with, with the subject "Delete my account". We confirm by email and close the account within 7 days.
 
 ## What is deleted, and what is kept
 
@@ -18,4 +18,4 @@ Email **SUPPORT_EMAIL** from the email address you sign in with, with the subjec
 - **Kept for up to 3 years:** past order records (items, totals, times, the shop and the name and email on them), for shop accounting, refunds and disputes. They are then deleted.
 - Print Store files are already deleted 24 hours after each order ends.
 
-For anything else about your data, see the privacy policy or email SUPPORT_EMAIL.
+For anything else about your data, see the privacy policy or email admincampuscartnith@gmail.com.
