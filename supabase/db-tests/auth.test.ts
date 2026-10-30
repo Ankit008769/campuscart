@@ -37,6 +37,19 @@ test('the sign-up hook lets in emails an admin approved', async () => {
   assert.deepEqual(await hook('Owner.General@gmail.com'), {});
 });
 
+test('an admin-approved Gmail (the Play review account) signs up as a student with no shop', async () => {
+  await asOwner(db, `insert into public.allowed_logins (email, role, note) values ('campuscart.review@gmail.com', 'student', 'Google Play review account')`);
+  assert.deepEqual(await hook('CampusCart.Review@gmail.com'), {});
+  const id = await addUser(db, 'campuscart.review@gmail.com', 'Play Reviewer');
+  const [profile] = await asOwner<{ role: string }>(db, 'select role from public.profiles where id = $1', [id]);
+  assert.equal(profile.role, 'student');
+  assert.deepEqual(await asOwner(db, 'select 1 from public.shop_staff where profile_id = $1', [id]), []);
+  await assert.rejects(
+    asOwner(db, `insert into public.allowed_logins (email, role, shop_id) values ('demo.student2@gmail.com', 'student', $1)`, [SHOP.general]),
+    /allowed_logins_check/,
+  );
+});
+
 test('a new college user gets a student profile with their name', async () => {
   const id = await addUser(db, '22bec045@nith.ac.in', 'Asha Verma');
   const [profile] = await asOwner<{ role: string; name: string; email: string }>(
