@@ -7,6 +7,8 @@ export type MyShop = {
   prep_minutes: number;
   rush_until: string | null;
   rush_extra_minutes: number;
+  /** Where students pay by UPI. Only the CampusCart team can change it. */
+  upi_vpa: string | null;
   /** owner sees staff and reports; counter runs orders and stock. */
   role: 'owner' | 'counter';
 };
@@ -15,7 +17,7 @@ export type MyShop = {
 export async function loadMyShop(): Promise<MyShop | null> {
   const { data, error } = await supabase
     .from('shop_staff')
-    .select('role, shops (id, name, is_open, prep_minutes, rush_until, rush_extra_minutes)')
+    .select('role, shops (id, name, is_open, prep_minutes, rush_until, rush_extra_minutes, upi_vpa)')
     .limit(1)
     .maybeSingle();
   if (error) throw error;

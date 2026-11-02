@@ -155,3 +155,36 @@ export async function claimBatch(client: CampusClient, dropPointId: string, orde
   if (error) throw error;
   return data;
 }
+
+// --- cash collected on deliveries ----------------------------------------------------------------
+
+/**
+ * Cash this rider collected and hasn't handed to the shops yet, per shop, oldest first. Each row
+ * also carries the limit: at it, the rider can't take more deliveries until a shop confirms.
+ */
+export async function getMyRiderCash(client: CampusClient) {
+  const { data, error } = await client.rpc('my_rider_cash');
+  if (error) throw error;
+  return data;
+}
+
+/** Riders holding this shop's cash, with their phone numbers. Shop staff and admins only. */
+export async function listShopRiderCash(client: CampusClient, shopId: string) {
+  const { data, error } = await client.rpc('shop_rider_cash', { p_shop_id: shopId });
+  if (error) throw error;
+  return data;
+}
+
+/** The shop confirms it received everything a rider held for it. Returns the amount in paise. */
+export async function settleRiderCash(client: CampusClient, shopId: string, riderId: string): Promise<number> {
+  const { data, error } = await client.rpc('settle_rider_cash', { p_shop_id: shopId, p_rider_id: riderId });
+  if (error) throw error;
+  return data;
+}
+
+/** Admins: every rider holding cash, per shop, oldest first. */
+export async function getRiderCashReport(client: CampusClient) {
+  const { data, error } = await client.rpc('rider_cash_report');
+  if (error) throw error;
+  return data;
+}

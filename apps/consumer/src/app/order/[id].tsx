@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { PayAtHandover } from '@/components/pay-at-handover';
 import { RateOrder } from '@/components/rate-order';
 import { TrackingMap } from '@/components/tracking-map';
 import { ThemedText } from '@/components/themed-text';
@@ -220,6 +221,17 @@ export default function OrderScreen() {
           </View>
           {(order.status === 'delivered' || order.status === 'collected') && <StatusBadge label="Completed" tone="good" />}
         </ThemedView>
+
+        {!isFinal(order.status) && (
+          <PayAtHandover
+            payMethod={order.pay_method}
+            totalPaise={order.total_paise}
+            shopName={order.shops?.name ?? 'the shop'}
+            shopUpi={order.shops?.upi_vpa ?? null}
+            orderCode={order.code}
+            byRider={order.mode === 'delivery' && !!order.rider_id}
+          />
+        )}
 
         {(order.status === 'delivered' || order.status === 'collected') && order.completed_at && (
           <RateOrder
