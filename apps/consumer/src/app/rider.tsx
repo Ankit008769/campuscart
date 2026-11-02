@@ -7,6 +7,7 @@ import {
   earningsByWeek,
   formatPaise,
   getMyRider,
+  getMyRiderCash,
   listBatchOffers,
   listDeliveryOffers,
   listMyDeliveries,
@@ -21,6 +22,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
+import { RiderCash } from '@/components/rider-cash';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -34,6 +36,7 @@ type Offer = Awaited<ReturnType<typeof listDeliveryOffers>>[number];
 type BatchOffer = Awaited<ReturnType<typeof listBatchOffers>>[number];
 type Delivery = Awaited<ReturnType<typeof listMyDeliveries>>[number];
 type Payout = Awaited<ReturnType<typeof listMyPayouts>>[number];
+type HeldCash = Awaited<ReturnType<typeof getMyRiderCash>>;
 
 // Offers aren't pushed to the screen live (riders can't watch orders they haven't taken), so poll.
 const OFFER_POLL_MS = 10_000;
@@ -50,6 +53,7 @@ export default function RiderScreen() {
   const [batches, setBatches] = useState<BatchOffer[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [cash, setCash] = useState<HeldCash>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -58,9 +62,14 @@ export default function RiderScreen() {
     const me = await getMyRider(supabase, userId);
     setRider(me);
     if (me?.status === 'approved') {
-      const [mine, paid] = await Promise.all([listMyDeliveries(supabase, userId), listMyPayouts(supabase)]);
+      const [mine, paid, held] = await Promise.all([
+        listMyDeliveries(supabase, userId),
+        listMyPayouts(supabase),
+        getMyRiderCash(supabase),
+      ]);
       setDeliveries(mine);
       setPayouts(paid);
+      setCash(held);
       const [single, batched] = me.online ? await Promise.all([listDeliveryOffers(supabase), listBatchOffers(supabase)]) : [[], []];
       setOffers(single);
       setBatches(batched);
@@ -143,6 +152,8 @@ export default function RiderScreen() {
                 trackColor={{ true: Brand.green }}
               />
             </ThemedView>
+
+            <RiderCash held={cash} />
 
             {open.length > 0 && <ThemedText type="smallBold">Your deliveries</ThemedText>}
             {open.map((delivery) => (
@@ -316,6 +327,11 @@ function DeliveryCard({
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {items} {items === 1 ? 'item' : 'items'} · you earn {formatPaise(delivery.rider_payout_paise)} · taken {minutes} min ago
+      </ThemedText>
+      <ThemedText type="small">
+        {delivery.pay_method === 'cash'
+          ? `Collect ${formatPaise(delivery.total_paise)} in cash. It belongs to ${delivery.shops?.name ?? 'the shop'}: hand it over there.`
+          : `The student pays ${delivery.shops?.name ?? 'the shop'} ${formatPaise(delivery.total_paise)} by UPI${delivery.shops?.upi_vpa ? ` (${delivery.shops.upi_vpa})` : ''}. Never take UPI to your own ID.`}
       </ThemedText>
       {delivery.profiles?.phone && (
         <Pressable accessibilityRole="button" onPress={() => Linking.openURL(`tel:${delivery.profiles?.phone}`)}>

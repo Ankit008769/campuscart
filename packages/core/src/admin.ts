@@ -44,16 +44,17 @@ export async function listOrdersSince(client: CampusClient, since: string) {
 export async function listShopsForAdmin(client: CampusClient) {
   const { data, error } = await client
     .from('shops')
-    .select('id, name, kind, phone, is_open, hours, prep_minutes, commission_bps, does_delivery, does_pickup')
+    .select('id, name, kind, phone, upi_vpa, is_open, hours, prep_minutes, commission_bps, does_delivery, does_pickup')
     .order('name');
   if (error) throw error;
   return data;
 }
 
+/** upi_vpa is where students pay by UPI; only admins can change it, never shop staff. */
 export type ShopUpdate = Partial<
   Pick<
     Database['public']['Tables']['shops']['Update'],
-    'name' | 'kind' | 'is_open' | 'hours' | 'prep_minutes' | 'commission_bps' | 'does_delivery' | 'does_pickup' | 'phone'
+    'name' | 'kind' | 'is_open' | 'hours' | 'prep_minutes' | 'commission_bps' | 'does_delivery' | 'does_pickup' | 'phone' | 'upi_vpa'
   >
 >;
 

@@ -5,6 +5,7 @@ export * from './catalog';
 export * from './catalog-csv';
 export * from './engagement';
 export * from './group-orders';
+export * from './handover';
 export * from './bill';
 export type { Database, Json } from './database.types';
 export * from './hours';

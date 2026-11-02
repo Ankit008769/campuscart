@@ -90,6 +90,16 @@ export default function ShopScreen() {
                 </View>
               </ThemedView>
 
+              <ThemedView type="backgroundElement" style={styles.card}>
+                <ThemedText type="smallBold">UPI payments</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {shop.upi_vpa
+                    ? `Students who pay by UPI pay ${shop.upi_vpa}, even when a rider brings the order.`
+                    : 'No UPI ID set yet, so students ask for your UPI QR code at handover.'}{' '}
+                  To change it, contact the CampusCart team; it can&apos;t be changed from the app, so nobody can redirect your payments.
+                </ThemedText>
+              </ThemedView>
+
               {shop.role === 'owner' ? (
                 <>
                   <Reports shopId={shop.id} />

@@ -86,8 +86,9 @@ export function useOpenTappedOrder(side: Side | null) {
         if (typeof data?.orderId === 'string') router.navigate('/partner');
         return;
       }
-      // Rider pushes (offers, ready for pickup) carry deliveryId; order updates carry orderId.
-      if (typeof data?.deliveryId === 'string') router.push('/rider');
+      // Rider pushes (offers, ready for pickup) carry deliveryId, and cash handovers screen: rider;
+      // order updates carry orderId.
+      if (typeof data?.deliveryId === 'string' || data?.screen === 'rider') router.push('/rider');
       else if (typeof data?.shopId === 'string') router.push({ pathname: '/shop/[id]', params: { id: data.shopId } });
       else if (typeof data?.orderId === 'string') router.push({ pathname: '/order/[id]', params: { id: data.orderId } });
     };
