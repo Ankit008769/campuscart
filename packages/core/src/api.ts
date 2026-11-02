@@ -326,13 +326,15 @@ export async function listShopOrders(client: CampusClient, shopId: string) {
 }
 
 /**
- * Calls onChange whenever an order matching `filter` (a Realtime filter such as `shop_id=eq.<id>`,
- * or null for every order the signed-in person may read) is created or changes. Realtime applies
- * the same row-level security as reads. Returns an unsubscribe.
+ * Calls onChange whenever an order matching `filter` (a Realtime filter on student_id, rider_id,
+ * shop_id, cart_id or id, such as `shop_id=eq.<id>`, or null for the admin board's every order) is
+ * created or changes. The channel is private: can_watch_orders_channel lets each person join only
+ * their own lists, and Realtime applies the same row-level security as reads. Returns an unsubscribe.
  */
 export function watchOrders(client: CampusClient, filter: string | null, onChange: () => void): () => void {
+  const suffix = Math.random().toString(36).slice(2) || '0';
   const channel = client
-    .channel(`orders:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
+    .channel(`orders:${filter ?? 'all'}:${suffix}`, { config: { private: true } })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', ...(filter ? { filter } : {}) }, () =>
       onChange(),
     )
