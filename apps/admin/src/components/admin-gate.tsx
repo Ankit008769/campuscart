@@ -1,6 +1,6 @@
 "use client";
 
-import { amIAdmin, authenticatorStatus, getMyProfile } from "@campuscart/core";
+import { amIAdmin, authenticatorStatus, getMyProfile, loginIdOf } from "@campuscart/core";
 import type { Session } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,7 +42,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
         setGate({ state: "signed-out" });
         return;
       }
-      const email = session.user.email ?? "";
+      const email = loginIdOf(session.user.email) ?? session.user.email ?? "";
       (async () => {
         const { role } = await getMyProfile(supabase, session.user.id);
         if (role !== "admin") return { state: "not-admin", email } as const;
