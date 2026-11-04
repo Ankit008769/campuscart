@@ -1,42 +1,31 @@
 import { Brand, Radius } from '@campuscart/ui';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
-import { useAuth, type Side } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 
-// The first screen of the app: students and shops sign in here, then the app opens their side.
-const CHOICES: { side: Side; title: string; hint: string }[] = [
-  {
-    side: 'student',
-    title: "I'm a student",
-    hint: 'Order from campus shops. Use your @nith.ac.in Google account.',
-  },
-  {
-    side: 'shop',
-    title: 'I run a shop',
-    hint: 'Take orders for your shop. Use the Google account the CampusCart team approved.',
-  },
-];
-
+// The first screen of the app. Students continue with Google; shops and admins sign in with an ID.
 export default function SignInScreen() {
   const { session, signIn, authError } = useAuth();
-  const [busy, setBusy] = useState<Side | null>(null);
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
   const [localError, setError] = useState<string | null>(null);
   const error = localError ?? authError;
   // Signed in, and the app is reading which side this account belongs to.
   const opening = !!session;
 
-  async function onContinue(side: Side) {
-    setBusy(side);
+  async function onGoogle(anyAccount: boolean) {
+    setBusy(true);
     setError(null);
     try {
-      await signIn(side);
+      await signIn({ anyAccount });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-in failed. Please try again.');
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
@@ -56,33 +45,41 @@ export default function SignInScreen() {
         ) : (
           <View style={styles.actions}>
             <Text style={styles.question}>How do you use CampusCart?</Text>
-            {CHOICES.map(({ side, title, hint }) => {
-              const shop = side === 'shop';
-              return (
-                <Pressable
-                  key={side}
-                  accessibilityRole="button"
-                  accessibilityHint={hint}
-                  onPress={() => onContinue(side)}
-                  disabled={busy !== null}
-                  style={({ pressed }) => [
-                    styles.choice,
-                    shop && styles.choiceShop,
-                    (pressed || busy === side) && styles.choicePressed,
-                  ]}>
-                  <View style={styles.choiceText}>
-                    <Text style={[styles.choiceTitle, shop && styles.onGreen]}>{title}</Text>
-                    <Text style={[styles.choiceHint, shop && styles.onGreen]}>{hint}</Text>
-                  </View>
-                  {busy === side ? (
-                    <ActivityIndicator color={shop ? '#ffffff' : Brand.ink} />
-                  ) : (
-                    <Text style={[styles.choiceGo, shop && styles.onGreen]}>Continue with Google</Text>
-                  )}
-                </Pressable>
-              );
-            })}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityHint="Order from campus shops. Use your @nith.ac.in Google account."
+              onPress={() => onGoogle(false)}
+              disabled={busy}
+              style={({ pressed }) => [styles.choice, (pressed || busy) && styles.choicePressed]}>
+              <View style={styles.choiceText}>
+                <Text style={styles.choiceTitle}>I&apos;m a student</Text>
+                <Text style={styles.choiceHint}>Order from campus shops. Use your @nith.ac.in Google account.</Text>
+              </View>
+              {busy ? <ActivityIndicator color={Brand.ink} /> : <Text style={styles.choiceGo}>Continue with Google</Text>}
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityHint="Take orders for your shop. Use the ID and password from the CampusCart team."
+              onPress={() => router.push('/shop-sign-in')}
+              disabled={busy}
+              style={({ pressed }) => [styles.choice, styles.choiceShop, pressed && styles.choicePressed]}>
+              <View style={styles.choiceText}>
+                <Text style={[styles.choiceTitle, styles.onGreen]}>I run a shop</Text>
+                <Text style={[styles.choiceHint, styles.onGreen]}>
+                  Take orders for your shop. Use the ID and password from the CampusCart team.
+                </Text>
+              </View>
+              <Text style={[styles.choiceGo, styles.onGreen]}>Sign in with your ID</Text>
+            </Pressable>
             {error && <Text style={styles.error}>{error}</Text>}
+            <View style={styles.smallLinks}>
+              <Pressable accessibilityRole="button" disabled={busy} onPress={() => onGoogle(true)} hitSlop={8}>
+                <Text style={styles.smallLink}>Use another Google account</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => router.push('/admin-sign-in')} hitSlop={8}>
+                <Text style={styles.smallLink}>Admin</Text>
+              </Pressable>
+            </View>
           </View>
         )}
       </SafeAreaView>
@@ -159,6 +156,17 @@ const styles = StyleSheet.create({
   },
   onGreen: {
     color: '#ffffff',
+  },
+  smallLinks: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing.two,
+  },
+  smallLink: {
+    color: Brand.ink,
+    fontSize: 13,
+    fontWeight: 600,
+    opacity: 0.75,
   },
   error: {
     color: Brand.red,

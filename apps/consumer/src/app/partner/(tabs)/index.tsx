@@ -2,6 +2,7 @@ import {
   ACCEPT_WINDOW_MS,
   formatPaise,
   listShopOrders,
+  loginIdOf,
   printFileLink,
   transitionOrder,
   watchOrders,
@@ -45,6 +46,7 @@ const PAY_LABEL = { cash: 'cash', upi_at_handover: 'UPI' } as const;
 
 export default function OrdersScreen() {
   const { session, signOut } = useAuth();
+  const signedInAs = loginIdOf(session?.user.email) ?? session?.user.email;
   // undefined while loading, null when the account has no shop.
   const [shop, setShop] = useState<MyShop | null | undefined>(undefined);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -116,7 +118,7 @@ export default function OrdersScreen() {
             <ThemedView type="backgroundElement" style={styles.card}>
               <ThemedText type="smallBold">This account isn&apos;t linked to a shop yet</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Ask the CampusCart team to approve {session?.user.email} for your shop, then sign in again.
+                Ask the CampusCart team to add {signedInAs} to your shop, then sign in again.
               </ThemedText>
             </ThemedView>
           )}
@@ -186,7 +188,7 @@ export default function OrdersScreen() {
 
           <ThemedView type="backgroundElement" style={[styles.card, styles.account]}>
             <ThemedText type="small" themeColor="textSecondary">
-              Signed in as {session?.user.email}
+              Signed in as {signedInAs}
             </ThemedText>
             <Pressable accessibilityRole="button" onPress={signOut}>
               <ThemedText type="linkPrimary">Sign out</ThemedText>

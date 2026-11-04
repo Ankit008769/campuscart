@@ -30,8 +30,13 @@ const SUPABASE_STUB = `
     select nullif(current_setting('request.jwt.claims', true)::jsonb ->> 'sub', '')::uuid
   $$;
 
+  create function auth.jwt() returns jsonb language sql stable as $$
+    select coalesce(current_setting('request.jwt.claims', true)::jsonb, '{}'::jsonb)
+  $$;
+
   grant usage on schema auth, extensions, public to anon, authenticated, service_role;
   grant execute on function auth.uid() to anon, authenticated, service_role;
+  grant execute on function auth.jwt() to anon, authenticated, service_role;
   alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
   alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
@@ -86,10 +91,13 @@ export async function addUser(db: PGlite, email: string, name = 'Test User'): Pr
   return user.id;
 }
 
-/** Runs `fn` as a signed-in user (role authenticated), or signed out (role anon) when userId is null. */
-export async function as<T>(db: PGlite, userId: string | null, fn: () => Promise<T>): Promise<T> {
+/**
+ * Runs `fn` as a signed-in user (role authenticated), or signed out (role anon) when userId is null.
+ * Sessions count as past the Authenticator step unless `aal` says otherwise.
+ */
+export async function as<T>(db: PGlite, userId: string | null, fn: () => Promise<T>, aal = 'aal2'): Promise<T> {
   await db.query(`select set_config('request.jwt.claims', $1, false)`, [
-    JSON.stringify(userId ? { sub: userId, role: 'authenticated' } : {}),
+    JSON.stringify(userId ? { sub: userId, role: 'authenticated', aal } : {}),
   ]);
   await db.exec(userId ? 'set role authenticated' : 'set role anon');
   try {

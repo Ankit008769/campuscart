@@ -221,10 +221,10 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-# Off: everyone signs in with Google. Left on, anyone could create unconfirmed accounts for any
-# @nith.ac.in address and make the project email those students. Turn it off in the live dashboard
-# too (Authentication → Sign In / Providers → Email).
-enable_signup = false
+# On, because shops and admins sign in with an ID and password (accounts only admins create, see
+# supabase/functions/shop-logins). hook_before_user_created refuses every public email sign-up, so
+# nobody can create an account here or make the project email a student.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
@@ -444,6 +444,10 @@ verify_jwt = false
 # The student app calls this with the student's session; the function checks it itself
 # (auth.getUser), which works with both legacy and new API keys.
 [functions.price-print]
+verify_jwt = false
+
+# Admins and shop owners call this with their session; the function checks it itself.
+[functions.shop-logins]
 verify_jwt = false
 
 # Called hourly by pg_cron with no user token. It deletes only what expired_print_files lists.

@@ -10,11 +10,13 @@ before(async () => {
   db = await createDb();
 });
 
-async function hook(email: string) {
+async function hook(email: string, provider = 'google') {
   const [row] = await asOwner<{ result: Record<string, unknown> }>(
     db,
-    `select public.hook_before_user_created(jsonb_build_object('user', jsonb_build_object('email', $1::text))) as result`,
-    [email],
+    `select public.hook_before_user_created(jsonb_build_object('user', jsonb_build_object(
+       'email', $1::text, 'app_metadata', jsonb_build_object('provider', $2::text)
+     ))) as result`,
+    [email, provider],
   );
   return row.result;
 }
@@ -32,9 +34,17 @@ test('the sign-up hook refuses other emails with a 403', async () => {
   assert.notDeepEqual(await hook('fake@nith.ac.in.evil.com'), {});
 });
 
-test('the sign-up hook lets in emails an admin approved', async () => {
+test('the sign-up hook refuses every public email sign-up, even a college address', async () => {
+  const refused = { error: { http_code: 403, message: 'Sign in with your @nith.ac.in college account.' } };
+  assert.deepEqual(await hook('21bcs001@nith.ac.in', 'email'), refused);
+  assert.deepEqual(await hook('someshop@logins.campuscart.invalid', 'email'), refused);
+});
+
+test('a Gmail approved for a shop can no longer sign up with Google', async () => {
   await asOwner(db, `insert into public.allowed_logins (email, role, shop_id) values ('owner.general@gmail.com', 'merchant_owner', $1)`, [SHOP.general]);
-  assert.deepEqual(await hook('Owner.General@gmail.com'), {});
+  assert.deepEqual(await hook('Owner.General@gmail.com'), {
+    error: { http_code: 403, message: 'Shops sign in with the ID and password from the CampusCart team.' },
+  });
 });
 
 test('an admin-approved Gmail (the Play review account) signs up as a student with no shop', async () => {

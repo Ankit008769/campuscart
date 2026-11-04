@@ -1,10 +1,7 @@
 import {
   formatPaise,
-  inviteShopStaff,
   isRushing,
-  listShopStaff,
   missedDemand,
-  removeShopStaff,
   reportCsv,
   reportPeriods,
   reportSummary,
@@ -15,17 +12,16 @@ import {
 import { Brand, Radius } from '@campuscart/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ShopLogins } from '@/components/shop-logins';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { loadMyShop, type MyShop } from '@/lib/my-shop';
 import { supabase } from '@/lib/supabase';
 
-type Staff = Awaited<ReturnType<typeof listShopStaff>>[number];
 type ReportDay = Awaited<ReturnType<typeof shopReport>>[number];
 type TopItem = Awaited<ReturnType<typeof shopTopItems>>[number];
 
@@ -104,7 +100,7 @@ export default function ShopScreen() {
                 <>
                   <Reports shopId={shop.id} />
                   <MissedDemand />
-                  <StaffCard shopId={shop.id} />
+                  <ShopLogins shopId={shop.id} />
                 </>
               ) : (
                 <ThemedText type="small" themeColor="textSecondary">
@@ -235,92 +231,6 @@ function MissedDemand() {
   );
 }
 
-function StaffCard({ shopId }: { shopId: string }) {
-  const theme = useTheme();
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [version, setVersion] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    listShopStaff(supabase, shopId).then(
-      (next) => active && setStaff(next),
-      (e: unknown) => active && setMessage(messageOf(e)),
-    );
-    return () => {
-      active = false;
-    };
-  }, [shopId, version]);
-
-  async function invite() {
-    setBusy(true);
-    setMessage(null);
-    try {
-      const result = await inviteShopStaff(supabase, shopId, email);
-      setMessage(result === 'added' ? `${email} is on your team now.` : `${email} can sign in to this app with that Gmail.`);
-      setEmail('');
-      setVersion((v) => v + 1);
-    } catch (e) {
-      setMessage(messageOf(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function remove(member: Staff) {
-    Alert.alert('Remove from the shop?', `${member.profiles?.name || member.profiles?.email} will no longer see your orders.`, [
-      { text: 'Keep', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () =>
-          removeShopStaff(supabase, shopId, member.profile_id).then(
-            () => setVersion((v) => v + 1),
-            (e: unknown) => setMessage(messageOf(e)),
-          ),
-      },
-    ]);
-  }
-
-  return (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Staff</ThemedText>
-      {staff.map((member) => (
-        <View key={member.profile_id} style={styles.row}>
-          <ThemedText type="small" style={styles.flex}>
-            {member.profiles?.name || member.profiles?.email} · {member.role === 'owner' ? 'Owner' : 'Counter'}
-          </ThemedText>
-          {member.role === 'counter' && (
-            <Pressable accessibilityRole="button" onPress={() => remove(member)}>
-              <Text style={styles.remove}>Remove</Text>
-            </Pressable>
-          )}
-        </View>
-      ))}
-      <ThemedText type="small" themeColor="textSecondary">
-        Counter staff take orders and change stock. They don&apos;t see sales, commission or staff.
-      </ThemedText>
-      <View style={styles.row}>
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="helper@gmail.com"
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, styles.flex, { color: theme.text, borderColor: theme.backgroundSelected }]}
-        />
-        <Pressable accessibilityRole="button" disabled={busy || !email.trim()} onPress={invite} style={[styles.chip, (busy || !email.trim()) && styles.disabled]}>
-          <Text style={styles.chipText}>Add</Text>
-        </Pressable>
-      </View>
-      {message && <ThemedText type="small">{message}</ThemedText>}
-    </ThemedView>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -363,20 +273,6 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: '#ffffff',
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Radius.medium,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 14,
-  },
-  remove: {
-    color: Brand.red,
-    fontWeight: 600,
-  },
-  disabled: {
-    opacity: 0.45,
   },
   error: {
     color: Brand.red,

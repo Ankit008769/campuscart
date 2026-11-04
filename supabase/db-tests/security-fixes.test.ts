@@ -63,51 +63,6 @@ test('a group-order code shows members each other\'s names, never their phone, e
   assert.deepEqual(await rowsAs(friend, 'select phone, email, room_note from public.profiles where id = $1', [host]), []);
 });
 
-test('a shop owner cannot rewrite an approval the CampusCart team made', async () => {
-  await asOwner(db, `insert into public.allowed_logins (email, role, note) values ('sec.new.admin@gmail.com', 'admin', 'not signed in yet')`);
-  await asOwner(db, `insert into public.allowed_logins (email, role, shop_id) values ('sec.juice.next@gmail.com', 'merchant_owner', $1)`, [
-    SHOP.juice,
-  ]);
-
-  for (const email of ['sec.new.admin@gmail.com', 'sec.juice.next@gmail.com']) {
-    await assert.rejects(
-      as(db, generalOwner, () => db.query('select public.invite_shop_staff($1, $2)', [SHOP.general, email])),
-      /already set up for something else/,
-    );
-  }
-  const approvals = await asOwner<{ email: string; role: string }>(
-    db,
-    `select email, role from public.allowed_logins where email in ('sec.new.admin@gmail.com', 'sec.juice.next@gmail.com') order by email`,
-  );
-  assert.deepEqual(approvals, [
-    { email: 'sec.juice.next@gmail.com', role: 'merchant_owner' },
-    { email: 'sec.new.admin@gmail.com', role: 'admin' },
-  ]);
-
-  // Inviting a fresh helper still works, and inviting them again is harmless.
-  const invite = () => as(db, generalOwner, async () => (await db.query<{ r: string }>('select public.invite_shop_staff($1, $2) as r', [SHOP.general, 'sec.helper@gmail.com'])).rows[0].r);
-  assert.equal(await invite(), 'invited');
-  assert.equal(await invite(), 'invited');
-});
-
-test('a shop owner cannot pull another shop\'s counter staff into their shop', async () => {
-  await assert.rejects(
-    as(db, generalOwner, () => db.query('select public.invite_shop_staff($1, $2)', [SHOP.general, 'sec.juice.counter@gmail.com'])),
-    /already set up for something else|works at another shop/,
-  );
-  // Even once the approval row is gone, the staff membership itself is checked.
-  await asOwner(db, `delete from public.allowed_logins where email = 'sec.juice.counter@gmail.com'`);
-  await assert.rejects(
-    as(db, generalOwner, () => db.query('select public.invite_shop_staff($1, $2)', [SHOP.general, 'sec.juice.counter@gmail.com'])),
-    /works at another shop/,
-  );
-  const shops = await asOwner<{ n: number }>(
-    db,
-    `select count(*)::int as n from public.shop_staff s join public.profiles p on p.id = s.profile_id where p.email = 'sec.juice.counter@gmail.com'`,
-  );
-  assert.equal(shops[0].n, 1);
-});
-
 test('an approved rider who changes their payout UPI ID goes back to admins, and not mid-delivery', async () => {
   const rider = await addUser(db, '24bec403@nith.ac.in', 'Rider');
   await asOwner(db, `update public.profiles set phone = '+919800000403' where id = $1`, [rider]);

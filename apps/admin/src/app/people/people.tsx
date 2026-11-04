@@ -22,7 +22,8 @@ const ROLE_LABEL: Record<StaffRole, string> = {
   rider: "Rider",
   admin: "Admin",
 };
-const ROLES = Object.keys(ROLE_LABEL) as StaffRole[];
+// Shops sign in with IDs, given on the admin side of the phone app, not with an approved Gmail.
+const ROLES: StaffRole[] = ["rider", "admin"];
 
 const messageOf = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
 const input =
@@ -38,7 +39,7 @@ export default function PeoplePage() {
   const [version, setVersion] = useState(0);
 
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<StaffRole>("merchant_owner");
+  const [role, setRole] = useState<StaffRole>("rider");
   const [shopId, setShopId] = useState("");
   const [note, setNote] = useState("");
   const [adding, setAdding] = useState(false);
@@ -95,8 +96,8 @@ export default function PeoplePage() {
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">Approved sign-ins</h2>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Students sign in with their @nith.ac.in account. Everyone else, such as shop owners with a Gmail, needs an
-          approval here first. Shop roles get the shop app for their shop on their first sign-in.
+          Students sign in with their @nith.ac.in account. Any other Google account needs an approval here first.
+          Shops don&apos;t use Google: their IDs and passwords are set on the admin side of the phone app.
         </p>
 
         <form onSubmit={onAdd} className={`${card} flex flex-wrap items-end gap-3`}>
@@ -108,7 +109,7 @@ export default function PeoplePage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="shop.owner@gmail.com"
+              placeholder="someone@gmail.com"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">

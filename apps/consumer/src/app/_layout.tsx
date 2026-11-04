@@ -29,7 +29,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session, side, loading } = useAuth();
+  const { session, side, needsAdminCode, loading } = useAuth();
   const userId = session?.user.id;
 
   useEffect(() => {
@@ -37,14 +37,15 @@ function RootNavigator() {
   }, [loading]);
 
   useEffect(() => {
-    if (!userId || !side) return;
+    if (!userId || !side || side === 'admin') return;
     if (side === 'student') logStep('app_open');
     registerForOrderPushes(side).catch((e: unknown) => console.warn('Could not turn on order notifications', e));
   }, [userId, side]);
-  useOpenTappedOrder(side);
+  useOpenTappedOrder(side === 'admin' ? null : side);
 
   // Signed out (or still finding out the side) shows sign-in, where people pick student or shop.
-  // Students get the ordering screens; shop owners and counter staff get the shop screens under /partner.
+  // Students get the ordering screens; shop owners and counter staff get the shop screens under /partner;
+  // admins get /admin, but only past the Authenticator code, which admin-sign-in asks for.
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
@@ -64,8 +65,15 @@ function RootNavigator() {
         <Stack.Protected guard={side === 'shop'}>
           <Stack.Screen name="partner" />
         </Stack.Protected>
-        <Stack.Protected guard={!side}>
+        <Stack.Protected guard={side === 'admin'}>
+          <Stack.Screen name="admin" />
+        </Stack.Protected>
+        <Stack.Protected guard={!side && !needsAdminCode}>
           <Stack.Screen name="sign-in" />
+          <Stack.Screen name="shop-sign-in" />
+        </Stack.Protected>
+        <Stack.Protected guard={!side}>
+          <Stack.Screen name="admin-sign-in" />
         </Stack.Protected>
       </Stack>
       <OfflineBanner />
