@@ -63,7 +63,7 @@ export async function updateShop(client: CampusClient, shopId: string, update: S
   if (error) throw error;
 }
 
-/** Adds a shop, closed until its staff open it. Approve its owner's Gmail on the People page. */
+/** Adds a shop, closed until its staff open it. Give its owner an ID on the admin side of the app. */
 export async function createShop(
   client: CampusClient,
   shop: { name: string; kind: string; phone: string | null; prepMinutes: number },
@@ -90,7 +90,7 @@ export async function setFeeRule(client: CampusClient, key: string, valuePaise: 
   if (error) throw error;
 }
 
-/** Non-student sign-ins admins have approved (shop owners and staff, riders, admins). */
+/** Google sign-ins admins have approved that aren't college accounts (riders, admins, reviewers). */
 export async function listAllowedLogins(client: CampusClient) {
   const { data, error } = await client
     .from('allowed_logins')

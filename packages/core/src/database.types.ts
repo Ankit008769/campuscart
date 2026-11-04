@@ -1897,6 +1897,21 @@ export type Database = {
         Args: { p_send: boolean; p_topic: string }
         Returns: boolean
       }
+      attach_shop_login: {
+        Args: {
+          p_profile_id: string
+          p_shop_id: string
+          p_staff_role: Database["public"]["Enums"]["staff_role"]
+        }
+        Returns: undefined
+      }
+      can_manage_shop_logins: {
+        Args: {
+          p_shop_id: string
+          p_staff_role: Database["public"]["Enums"]["staff_role"]
+        }
+        Returns: boolean
+      }
       can_watch_orders_channel: {
         Args: { p_topic: string }
         Returns: boolean
@@ -2060,10 +2075,6 @@ export type Database = {
         }[]
       }
       hook_before_user_created: { Args: { event: Json }; Returns: Json }
-      invite_shop_staff: {
-        Args: { p_email: string; p_shop_id: string }
-        Returns: string
-      }
       is_admin: { Args: never; Returns: boolean }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_online_rider: { Args: never; Returns: boolean }
@@ -2451,10 +2462,6 @@ export type Database = {
       }
       release_delivery: { Args: { p_order_id: string }; Returns: undefined }
       release_scheduled_orders: { Args: { p_at?: string }; Returns: number }
-      remove_shop_staff: {
-        Args: { p_profile_id: string; p_shop_id: string }
-        Returns: undefined
-      }
       request_account_deletion: { Args: never; Returns: undefined }
       rider_cash_due_paise: { Args: { p_rider_id: string }; Returns: number }
       rider_cash_limit_paise: { Args: never; Returns: number }

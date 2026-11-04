@@ -10,6 +10,7 @@ export * from './bill';
 export type { Database, Json } from './database.types';
 export * from './hours';
 export * from './inventory';
+export * from './logins';
 export * from './money';
 export * from './multi-cart';
 export * from './orders';

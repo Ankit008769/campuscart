@@ -35,7 +35,7 @@ FOR CAMPUS SHOPS
 DELIVER FOR CAMPUSCART
 Students can sign up as riders, deliver orders to hostels between classes, and get paid weekly by UPI.
 
-Sign in with your @nith.ac.in Google account. Shops sign in with the Google account the CampusCart team approved.
+Sign in with your @nith.ac.in Google account. Shops sign in with the ID and password from the CampusCart team.
 
 Campus Cart NITH is made for the NIT Hamirpur campus community. It is an independent service and is not run by or affiliated with NIT Hamirpur. It shows no ads and does not sell your data.
 
