@@ -21,7 +21,7 @@ npm run admin        # Next.js dev server for the admin panel
 npm run typecheck    # every workspace
 npm run lint
 npm test             # packages/core unit tests + supabase/db-tests (node:test, no Docker needed)
-npm run db:push      # apply new migrations to the linked Supabase project (Mumbai, ref xccstwhfaawgbztcrghs)
+npm run db:push      # apply new migrations to the linked Supabase project (Mumbai, ref pclighjvsijnedapngwg)
 npm run db:types     # regenerate packages/core/src/database.types.ts from the linked project
 ```
 
