@@ -17,13 +17,13 @@ Campus Cart NITH brings every shop inside NIT Hamirpur to your phone. Order snac
 FOR STUDENTS
 • Every campus shop in one place: see which shops are open now and how soon your order will be ready.
 • One cart, many shops: add items from different shops and check out once. Each shop gets its own order, and you pay the delivery fee only once.
-• Delivery to your hostel or department drop point, or pickup with a token number.
+• Delivery to your hostel or department drop point (₹50, free on orders of ₹250 or more), or pickup with a token number.
 • Schedule an order for later, for example dinner at 8:30 PM.
 • Order together: start a group order for your wing, everyone adds their own items, one delivery, and the app works out each person's share.
 • Print Store: send a PDF, get it printed and delivered. Only the shop can see your file, and it is deleted a day after your order.
-• Live order status, a delivery code for safe handover, and a live map while your order is on its way.
+• Live order status and a delivery code for safe handover.
 • Ratings, favourites, buy again, and back-in-stock alerts.
-• Pay at handover in cash or by UPI.
+• Pay at handover in cash, or by UPI straight to the shop.
 
 FOR CAMPUS SHOPS
 • Sign in as a shop and take orders with a loud new-order alarm, so nothing gets missed at a busy counter.
