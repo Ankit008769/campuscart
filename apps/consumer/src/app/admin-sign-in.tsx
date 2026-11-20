@@ -149,12 +149,12 @@ const styles = StyleSheet.create({
   back: {
     color: Brand.ink,
     fontSize: 16,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   title: {
     color: Brand.ink,
     fontSize: 28,
-    fontWeight: 800,
+    fontWeight: 600,
     marginTop: Spacing.four,
   },
   hint: {
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     padding: Spacing.three,
     fontSize: 15,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacing: 1,
   },
   input: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   error: {
     color: Brand.red,

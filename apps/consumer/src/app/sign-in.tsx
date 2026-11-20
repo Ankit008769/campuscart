@@ -104,12 +104,12 @@ const styles = StyleSheet.create({
   brand: {
     color: Brand.ink,
     fontSize: 40,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   tagline: {
     color: Brand.ink,
     fontSize: 18,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   opening: {
     alignItems: 'center',
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   question: {
     color: Brand.ink,
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   choice: {
     backgroundColor: '#ffffff',
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   choiceTitle: {
     color: Brand.ink,
     fontSize: 20,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   choiceHint: {
     color: Brand.ink,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   choiceGo: {
     color: Brand.ink,
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   onGreen: {
     color: '#ffffff',
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   smallLink: {
     color: Brand.ink,
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
     opacity: 0.75,
   },
   error: {

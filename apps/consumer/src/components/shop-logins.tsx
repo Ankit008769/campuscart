@@ -222,11 +222,11 @@ const styles = StyleSheet.create({
   },
   link: {
     color: Brand.green,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   remove: {
     color: Brand.red,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   chip: {
     borderWidth: 1,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: Brand.green,
     fontSize: 13,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   chipTextActive: {
     color: '#ffffff',
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   addText: {
     color: '#ffffff',
     fontSize: 13,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   disabled: {
     opacity: 0.45,

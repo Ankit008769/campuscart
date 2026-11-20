@@ -1,6 +1,7 @@
 import {
   PRINT_FILE_MAX_BYTES,
   calculateBill,
+  deliveryCharge,
   formatPaise,
   getFeeRules,
   listDropPoints,
@@ -278,8 +279,7 @@ export default function PrintScreen() {
                 label={`${priced.pages} ${priced.pages === 1 ? 'page' : 'pages'}${copies > 1 ? ` × ${copies}` : ''}, ${color ? 'colour' : 'black and white'}`}
                 paise={bill.subtotalPaise}
               />
-              {bill.deliveryFeePaise > 0 && <BillRow label="Delivery fee" paise={bill.deliveryFeePaise} />}
-              {bill.smallCartFeePaise > 0 && <BillRow label="Small cart fee" paise={bill.smallCartFeePaise} />}
+              {deliveryCharge(bill) > 0 && <BillRow label="Delivery" paise={deliveryCharge(bill)} />}
               <BillRow label="Platform fee" paise={bill.platformFeePaise} />
               <BillRow label="To pay" paise={bill.totalPaise} bold />
             </ThemedView>
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   segments: {
     flexDirection: 'row',
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
   segmentTextActive: {
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   primary: {
     backgroundColor: Brand.green,
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 15,
   },
   disabled: {

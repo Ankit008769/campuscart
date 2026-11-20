@@ -1,18 +1,15 @@
 import {
   DEFAULT_FEE_RULES,
   buyAgain,
-  describeShopHours,
-  effectivePrepMinutes,
   formatPaise,
   getShopRatings,
-  isRushing,
+  homePhotos,
   listCollectionsForStudents,
   listCategories,
   listShops,
   myBanners,
-  parseShopHours,
 } from '@campuscart/core';
-import { Brand, Radius, StatusBadge } from '@campuscart/ui';
+import { Brand, Radius } from '@campuscart/ui';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -20,12 +17,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/card';
 import { CartBar } from '@/components/cart-bar';
+import { CategoryTiles } from '@/components/category-tiles';
 import { EmptyState } from '@/components/empty-state';
 import { Icon } from '@/components/icon';
 import { PhotoCredits } from '@/components/photo-credits';
 import { ProductImage } from '@/components/product-image';
 import { ProductStrip } from '@/components/product-strip';
+import { RiseIn } from '@/components/rise-in';
 import { SectionHeader } from '@/components/section-header';
+import { ShopCard } from '@/components/shop-card';
 import { SkeletonList } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -43,21 +43,14 @@ type Again = Awaited<ReturnType<typeof buyAgain>>[number];
 type Ratings = Awaited<ReturnType<typeof getShopRatings>>;
 type Banner = Awaited<ReturnType<typeof myBanners>>[number];
 type Collection = Awaited<ReturnType<typeof listCollectionsForStudents>>[number];
+type Photos = Awaited<ReturnType<typeof homePhotos>>;
 
-// Star colour dark enough to read on the light cards (Brand.yellow is too pale for a small glyph).
-const STAR = '#C98A00';
-// Category tiles alternate the two soft brand colours so the row reads as separate buttons.
-const TILE_COLORS = [Brand.greenSoft, Brand.yellowSoft];
+const NO_PHOTOS: Photos = { byShop: {}, byCategory: {} };
+
 // Room left at the bottom for the cart bar when it shows.
 const CART_BAR_SPACE = 76;
 
-/** What a closed shop's card says: its usual hours when the shop has set them. */
-function closedNote(hours: Shop['hours']): string {
-  const parsed = parseShopHours(hours);
-  return parsed ? `Closed now · usually ${describeShopHours(parsed)}` : 'Closed now';
-}
-
-// Ratings and buy again are extras: Home still loads if either fails.
+// Ratings, buy again and the photos are extras: Home still loads if any of them fails.
 const loadHome = () =>
   Promise.all([
     listShops(supabase),
@@ -66,11 +59,12 @@ const loadHome = () =>
     buyAgain(supabase).catch((): Again[] => []),
     myBanners(supabase).catch((): Banner[] => []),
     listCollectionsForStudents(supabase).catch((): Collection[] => []),
+    homePhotos(supabase).catch((): Photos => NO_PHOTOS),
   ]);
 
 type HomeData = Awaited<ReturnType<typeof loadHome>>;
 // Ratings are a Map, which JSON can't hold: the cached copy keeps its entries.
-type CachedHome = [Shop[], Category[], [string, { average: number; ratings: number }][], Again[], Banner[], Collection[]];
+type CachedHome = [Shop[], Category[], [string, { average: number; ratings: number }][], Again[], Banner[], Collection[], Photos?];
 const HOME_CACHE_MS = 24 * 60 * 60 * 1000;
 
 export default function HomeScreen() {
@@ -87,6 +81,7 @@ export default function HomeScreen() {
   const [again, setAgain] = useState<Again[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [photos, setPhotos] = useState<Photos>(NO_PHOTOS);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -94,19 +89,20 @@ export default function HomeScreen() {
   const cacheKey = `home:${session?.user.id ?? 'none'}`;
 
   const show = useCallback((data: HomeData) => {
-    const [nextShops, nextCategories, nextRatings, nextAgain, nextBanners, nextCollections] = data;
+    const [nextShops, nextCategories, nextRatings, nextAgain, nextBanners, nextCollections, nextPhotos] = data;
     setShops(nextShops);
     setCategories(nextCategories);
     setRatings(nextRatings);
     setAgain(nextAgain);
     setBanners(nextBanners);
     setCollections(nextCollections);
+    setPhotos(nextPhotos);
   }, []);
 
   const fetchAndKeep = useCallback(async () => {
     const data = await loadHome();
-    const [s, c, r, a, b, col] = data;
-    writeCache(cacheKey, [s, c, [...r.entries()], a, b, col] satisfies CachedHome);
+    const [s, c, r, a, b, col, ph] = data;
+    writeCache(cacheKey, [s, c, [...r.entries()], a, b, col, ph] satisfies CachedHome);
     return data;
   }, [cacheKey]);
 
@@ -125,8 +121,8 @@ export default function HomeScreen() {
     // Draw yesterday's copy at once; the live data replaces it a moment later.
     readCache<CachedHome>(cacheKey, HOME_CACHE_MS).then((cached) => {
       if (!active || fresh || !cached) return;
-      const [s, c, r, a, b, col] = cached;
-      show([s, c, new Map(r), a, b, col]);
+      const [s, c, r, a, b, col, ph] = cached;
+      show([s, c, new Map(r), a, b, col, ph ?? NO_PHOTOS]);
     });
     fetchAndKeep().then(
       (data) => {
@@ -224,25 +220,7 @@ export default function HomeScreen() {
         {categories.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title="Shop by category" action={{ label: 'Search all', onPress: () => router.push('/search') }} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tiles}>
-              {categories.map((category, i) => (
-                <Pressable
-                  key={category.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${category.name}, ${category.product_count} items`}
-                  onPress={() => router.push({ pathname: '/search', params: { categoryId: category.id, category: category.name } })}
-                  style={({ pressed }) => [
-                    styles.tile,
-                    { backgroundColor: TILE_COLORS[i % TILE_COLORS.length] },
-                    pressed && styles.pressed,
-                  ]}>
-                  <Text style={styles.tileLabel} numberOfLines={2}>
-                    {category.name}
-                  </Text>
-                  <Text style={styles.tileCount}>{category.product_count} items</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+            <CategoryTiles categories={categories} photos={photos.byCategory} />
           </View>
         )}
 
@@ -285,7 +263,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <SectionHeader
             title="Shops on campus"
-            subtitle={`Delivery ${formatPaise(DEFAULT_FEE_RULES.deliveryFeePaise)} · no small-cart fee from ${formatPaise(DEFAULT_FEE_RULES.smallCartLimitPaise)}`}
+            subtitle={`Delivery ${formatPaise(DEFAULT_FEE_RULES.smallCartFeePaise)} · free from ${formatPaise(DEFAULT_FEE_RULES.smallCartLimitPaise)}`}
           />
 
           {!shops && !error && <SkeletonList label="Loading shops" />}
@@ -294,50 +272,11 @@ export default function HomeScreen() {
             <EmptyState icon="error" title="Couldn't load shops" body={error} action={{ label: 'Try again', onPress: load }} />
           )}
 
-          {sortedShops?.map((shop) => {
-            const rating = ratings.get(shop.id);
-            return (
-              <Card
-                key={shop.id}
-                accessibilityHint="Opens the shop's menu"
-                onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop.id } })}
-                style={!shop.is_open && styles.closedCard}>
-                <View style={styles.row}>
-                  <View style={[styles.shopAvatar, { backgroundColor: shop.is_open ? Brand.yellowSoft : theme.backgroundSelected }]}>
-                    <Text style={styles.shopAvatarText}>{shop.name.charAt(0).toUpperCase()}</Text>
-                  </View>
-                  <View style={styles.flex}>
-                    <View style={styles.row}>
-                      <ThemedText type="smallBold" style={styles.flex} numberOfLines={1}>
-                        {shop.name}
-                      </ThemedText>
-                      <StatusBadge label={shop.is_open ? 'Open' : 'Closed'} tone={shop.is_open ? 'good' : 'bad'} />
-                    </View>
-                    <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                      {shop.kind}
-                    </ThemedText>
-                  </View>
-                </View>
-                <View style={[styles.row, styles.meta]}>
-                  <Icon name={shop.is_open && isRushing(shop) ? 'bolt' : 'clock'} size={16} color={theme.textSecondary} />
-                  <ThemedText type="small" style={styles.flex} numberOfLines={2}>
-                    {shop.is_open
-                      ? `${isRushing(shop) ? 'Busy · ' : ''}Ready in ~${effectivePrepMinutes(shop)} min${shop.does_pickup ? ' · Pickup too' : ''}`
-                      : closedNote(shop.hours)}
-                  </ThemedText>
-                  {rating && (
-                    <View style={styles.rating} accessibilityLabel={`Rated ${rating.average.toFixed(1)} from ${rating.ratings} ratings`}>
-                      <Icon name="star" size={14} color={STAR} />
-                      <ThemedText type="smallBold">{rating.average.toFixed(1)}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        ({rating.ratings})
-                      </ThemedText>
-                    </View>
-                  )}
-                </View>
-              </Card>
-            );
-          })}
+          {sortedShops?.map((shop, i) => (
+            <RiseIn key={shop.id} index={i}>
+              <ShopCard shop={shop} photo={photos.byShop[shop.id]} rating={ratings.get(shop.id)} />
+            </RiseIn>
+          ))}
         </View>
 
         <View style={styles.section}>
@@ -380,12 +319,12 @@ const styles = StyleSheet.create({
   greeting: {
     color: Brand.ink,
     fontSize: 26,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   subtitle: {
     color: Brand.ink,
     fontSize: 14,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   search: {
     marginTop: Spacing.two,
@@ -425,25 +364,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tiles: {
-    gap: Spacing.two,
-  },
-  tile: {
-    width: 108,
-    height: 80,
-    borderRadius: Radius.medium,
-    padding: Spacing.two,
-    justifyContent: 'flex-end',
-  },
-  tileLabel: {
-    color: Brand.ink,
-    fontSize: 14,
-    fontWeight: 800,
-  },
-  tileCount: {
-    color: Brand.inkSoft,
-    fontSize: 12,
-  },
   banners: {
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
@@ -459,7 +379,7 @@ const styles = StyleSheet.create({
   bannerTitle: {
     color: '#ffffff',
     fontSize: 18,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   bannerBody: {
     color: '#ffffff',
@@ -473,7 +393,7 @@ const styles = StyleSheet.create({
   bannerGoText: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   againRow: {
     gap: Spacing.three,
@@ -486,28 +406,5 @@ const styles = StyleSheet.create({
     width: 124,
     height: 96,
     borderRadius: Radius.medium,
-  },
-  closedCard: {
-    opacity: 0.7,
-  },
-  shopAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shopAvatarText: {
-    color: Brand.ink,
-    fontSize: 20,
-    fontWeight: 800,
-  },
-  meta: {
-    marginTop: Spacing.one,
-  },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.half,
   },
 });

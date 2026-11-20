@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     paddingHorizontal: Spacing.three,
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
     letterSpacing: 3,
   },
   join: {
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   joinText: {
     color: '#ffffff',
     fontSize: 15,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   pressed: {
     opacity: 0.8,

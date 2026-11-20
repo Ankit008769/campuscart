@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   alarmTitle: {
     color: '#ffffff',
     fontSize: 17,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   alarmText: {
     color: '#ffffff',
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
   tabTextActive: {
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
   },
   actionText: {
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 13,
   },
   disabled: {

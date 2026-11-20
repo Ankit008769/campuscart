@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: Brand.green,
     fontSize: 13,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   chipTextActive: {
     color: '#ffffff',

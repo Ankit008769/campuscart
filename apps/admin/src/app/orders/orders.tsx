@@ -260,8 +260,7 @@ function OrderDetail({
               <td className="py-0.5 text-right">{formatPaise(item.price_paise_snapshot * item.qty)}</td>
             </tr>
           ))}
-          <BillRow label="Delivery fee" paise={order.delivery_fee_paise} />
-          <BillRow label="Small cart fee" paise={order.small_cart_fee_paise} />
+          <BillRow label="Delivery" paise={order.delivery_fee_paise + order.small_cart_fee_paise} />
           <BillRow label="Platform fee" paise={order.platform_fee_paise} />
           <tr className="border-t border-zinc-200 font-semibold dark:border-zinc-800">
             <td className="pt-1">Total ({order.pay_method === "cash" ? "cash" : "UPI"} at handover)</td>

@@ -42,7 +42,7 @@ export function RiderCash({ held }: { held: Held }) {
 const styles = StyleSheet.create({
   limit: {
     color: Brand.red,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
 });

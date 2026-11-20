@@ -208,8 +208,7 @@ export default function OrderScreen() {
               <ThemedText type="small">{formatPaise(item.price_paise_snapshot * item.qty)}</ThemedText>
             </View>
           ))}
-          <FeeRow label="Delivery fee" paise={order.delivery_fee_paise} />
-          <FeeRow label="Small cart fee" paise={order.small_cart_fee_paise} />
+          <FeeRow label="Delivery" paise={order.delivery_fee_paise + order.small_cart_fee_paise} />
           <FeeRow label="Platform fee" paise={order.platform_fee_paise} />
           <FeeRow label="Distance and night charge" paise={order.surcharge_paise} />
           <FeeRow label={`Coupon ${order.coupon_code ?? ''}`} paise={-order.discount_paise} />
@@ -304,12 +303,12 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: '#ffffff',
     fontSize: 24,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   heroSub: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   card: {
     borderRadius: Radius.medium,
@@ -333,7 +332,7 @@ const styles = StyleSheet.create({
   },
   code: {
     fontSize: 40,
-    fontWeight: 800,
+    fontWeight: 600,
     letterSpacing: 8,
     color: Brand.green,
   },
@@ -353,7 +352,7 @@ const styles = StyleSheet.create({
   },
   againText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 15,
   },
   cancel: {
@@ -365,7 +364,7 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: Brand.red,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 15,
   },
   error: {

@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   message: {
     borderRadius: Radius.small,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   saveText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   disabled: {
@@ -243,6 +243,6 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     color: Brand.red,
-    fontWeight: 700,
+    fontWeight: 600,
   },
 });

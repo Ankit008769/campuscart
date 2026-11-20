@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 15,
   },
   disabled: {
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   },
   release: {
     color: Brand.red,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   error: {
     color: Brand.red,

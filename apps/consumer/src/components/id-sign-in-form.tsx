@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   error: {
     color: Brand.red,

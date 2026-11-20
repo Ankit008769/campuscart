@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   primary: {
     backgroundColor: Brand.green,
@@ -174,6 +174,6 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
   },
 });
