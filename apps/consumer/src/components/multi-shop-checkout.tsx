@@ -31,6 +31,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
 import { supabase } from '@/lib/supabase';
+import { PhoneRequired } from '@/components/phone-required';
+import { useNeedsPhone } from '@/hooks/use-needs-phone';
 
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
 
@@ -101,7 +103,8 @@ export function MultiShopCheckout() {
   });
   const discount = Math.min(coupon?.discountPaise ?? 0, primary?.subtotalPaise ?? 0);
   const toPay = preview ? preview.bill.totalPaise + surcharge - discount : 0;
-  const canPlace = !!preview && preview.problems.length === 0 && preview.shops.length > 0 && !placing && (mode === 'pickup' || !!dropPointId);
+  const needsPhone = useNeedsPhone();
+  const canPlace = !needsPhone && !!preview && preview.problems.length === 0 && preview.shops.length > 0 && !placing && (mode === 'pickup' || !!dropPointId);
 
   async function onPlace() {
     setPlacing(true);
@@ -245,6 +248,7 @@ export function MultiShopCheckout() {
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
+        {needsPhone && <PhoneRequired />}
         <Pressable accessibilityRole="button" disabled={!canPlace} onPress={onPlace} style={[styles.placeButton, !canPlace && styles.disabled]}>
           {placing ? (
             <ActivityIndicator color="#ffffff" />

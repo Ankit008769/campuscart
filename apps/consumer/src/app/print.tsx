@@ -28,6 +28,8 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { PhoneRequired } from '@/components/phone-required';
+import { useNeedsPhone } from '@/hooks/use-needs-phone';
 
 type PrintShop = Awaited<ReturnType<typeof listPrintShops>>[number];
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
@@ -52,6 +54,7 @@ export default function PrintScreen() {
   const [priced, setPriced] = useState<Priced | null>(null);
   const [mode, setMode] = useState<OrderMode>('pickup');
   const [dropPointId, setDropPointId] = useState<string | null>(null);
+  const needsPhone = useNeedsPhone();
   const [payMethod, setPayMethod] = useState<PayMethod>('upi_at_handover');
   const [busy, setBusy] = useState<'pick' | 'price' | 'place' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -151,7 +154,7 @@ export default function PrintScreen() {
   }
 
   const bill = priced && fees ? calculateBill(priced.pricePaise, mode, fees) : null;
-  const canPlace = !!priced && busy === null && (mode === 'pickup' || !!dropPointId) && !!shop?.shops?.is_open;
+  const canPlace = !needsPhone && !!priced && busy === null && (mode === 'pickup' || !!dropPointId) && !!shop?.shops?.is_open;
 
   return (
     <ThemedView style={styles.container}>
@@ -276,6 +279,7 @@ export default function PrintScreen() {
               <BillRow label="To pay" paise={bill.totalPaise} bold />
             </ThemedView>
 
+            {needsPhone && <PhoneRequired />}
             <Pressable
               accessibilityRole="button"
               disabled={!canPlace}

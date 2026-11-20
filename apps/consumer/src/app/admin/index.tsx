@@ -4,6 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
+import { AppVersionCard } from '@/components/app-version-card';
 import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -62,6 +63,12 @@ export default function AdminShopsScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Card accessibilityLabel="Monthly bills" onPress={() => router.push('/admin/bills')}>
+          <ThemedText type="smallBold">Monthly bills</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Each shop&apos;s orders this month and the ₹4 platform fee to collect.
+          </ThemedText>
+        </Card>
         {!shops && !error && <ActivityIndicator style={styles.loading} />}
         {shops?.map((shop) => (
           <Card key={shop.id} accessibilityLabel={shop.name} onPress={() => router.push(`/admin/shop/${shop.id}`)}>
@@ -87,6 +94,8 @@ export default function AdminShopsScreen() {
             New shops start closed. Give the owner a login on the shop&apos;s page.
           </ThemedText>
         </ThemedView>
+
+        <AppVersionCard />
 
         {error && <Text style={styles.error}>{error}</Text>}
         <Pressable accessibilityRole="button" onPress={signOut}>

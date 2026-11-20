@@ -7,8 +7,9 @@ const BUZZ = [0, 700, 300, 700, 300, 700];
 
 /**
  * Rings and buzzes on a loop while a new order is waiting that nobody at the counter has seen.
- * Accepting or rejecting an order takes it off the waiting list; silence() marks every order
- * waiting right now as seen, so only a newer order rings again.
+ * silence() marks every order waiting right now as seen, so only a newer order rings again, and
+ * handled(id) stops the ring the moment staff tap Accept or Reject, without waiting for the list
+ * to reload.
  */
 export function useNewOrderAlarm(waitingOrderIds: readonly string[]) {
   const [seen, setSeen] = useState<ReadonlySet<string>>(() => new Set());
@@ -27,10 +28,16 @@ export function useNewOrderAlarm(waitingOrderIds: readonly string[]) {
     player.play();
     if (Platform.OS !== 'web') Vibration.vibrate(BUZZ, true);
     return () => {
+      // Pause first: releasing alone can let the looping sound run on for a moment.
+      player.pause();
       player.remove();
       Vibration.cancel();
     };
   }, [ringing]);
 
-  return { ringing, silence: () => setSeen(new Set(waitingOrderIds)) };
+  return {
+    ringing,
+    silence: () => setSeen(new Set(waitingOrderIds)),
+    handled: (orderId: string) => setSeen((prev) => new Set(prev).add(orderId)),
+  };
 }

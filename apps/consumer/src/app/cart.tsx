@@ -34,6 +34,7 @@ import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
 import { logStep } from '@/lib/events';
 import { supabase } from '@/lib/supabase';
+import { PhoneRequired } from '@/components/phone-required';
 
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
 
@@ -116,7 +117,7 @@ export default function CartScreen() {
   const night = mode === 'delivery' && isNightDelivery(deliverAt) && (rules.nightSurchargePaise ?? 0) > 0;
   const toPay = bill.totalPaise - discount + surcharge;
   const shortOfFreeDelivery = rules.smallCartLimitPaise - cart.subtotalPaise;
-  const canPlace = !placing && (mode === 'pickup' || !!dropPointId) && (!mustSchedule || !!slot);
+  const canPlace = !needsPhone && !placing && (mode === 'pickup' || !!dropPointId) && (!mustSchedule || !!slot);
 
   async function onPlaceOrder() {
     if (!shop) return;
@@ -203,15 +204,6 @@ export default function CartScreen() {
           </>
         )}
 
-        {needsPhone && (
-          <Pressable accessibilityRole="button" onPress={() => router.push('/profile')}>
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="small">Add your mobile number so the shop can call you if something is out of stock.</ThemedText>
-              <ThemedText type="linkPrimary">Add number</ThemedText>
-            </ThemedView>
-          </Pressable>
-        )}
-
         <TimePicker
           shopId={shop.id}
           mode={mode}
@@ -256,6 +248,7 @@ export default function CartScreen() {
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
+        {needsPhone && <PhoneRequired />}
         <Pressable
           accessibilityRole="button"
           disabled={!canPlace}

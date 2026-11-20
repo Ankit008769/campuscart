@@ -77,6 +77,39 @@ export async function createShop(
   return data.id;
 }
 
+/** Month as 'YYYY-MM-01'. Each shop's completed orders that month and the platform fee it owes. */
+export async function shopMonthlyBills(client: CampusClient, month: string) {
+  const { data, error } = await client.rpc('shop_monthly_bills', { p_month: month });
+  if (error) throw error;
+  return data;
+}
+
+/** The completed orders behind one shop's bill for a month ('YYYY-MM-01'), oldest first. */
+export async function shopMonthOrders(client: CampusClient, shopId: string, month: string) {
+  const { data, error } = await client.rpc('shop_month_orders', { p_shop_id: shopId, p_month: month });
+  if (error) throw error;
+  return data;
+}
+
+/** The first day ('YYYY-MM-01') of this month and the months before it, in Indian time, newest first. */
+export function recentMonths(count: number, now = new Date()): { value: string; label: string }[] {
+  const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth() - i, 1));
+    return {
+      value: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+    };
+  });
+}
+
+/** Lets every app build in (0), or makes phones below this Android versionCode update first. */
+export async function setMinAndroidVersionCode(client: CampusClient, versionCode: number) {
+  if (!Number.isInteger(versionCode) || versionCode < 0) throw new Error('Use a whole build number, 0 or more.');
+  const { error } = await client.from('app_settings').update({ min_android_version_code: versionCode, updated_at: new Date().toISOString() }).eq('id', true);
+  if (error) throw error;
+}
+
 /** Fee settings as stored (key, paise), for editing. */
 export async function listFeeRules(client: CampusClient) {
   const { data, error } = await client.from('fee_rules').select('key, value_paise').order('key');

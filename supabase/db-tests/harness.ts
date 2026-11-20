@@ -81,13 +81,22 @@ export async function asOwner<T>(db: PGlite, sql: string, params: unknown[] = []
   return (await db.query<T>(sql, params)).rows;
 }
 
-/** Creates an auth user the way Supabase Auth would, which fires the profile trigger. */
-export async function addUser(db: PGlite, email: string, name = 'Test User'): Promise<string> {
+let phoneSeq = 0;
+
+/**
+ * Creates an auth user the way Supabase Auth would, which fires the profile trigger. Each one gets a
+ * mobile number, which ordering needs; pass `{ phone: false }` for someone who hasn't added one.
+ */
+export async function addUser(db: PGlite, email: string, name = 'Test User', { phone = true } = {}): Promise<string> {
   const [user] = await asOwner<{ id: string }>(
     db,
     `insert into auth.users (email, raw_user_meta_data) values ($1, jsonb_build_object('full_name', $2::text)) returning id`,
     [email, name],
   );
+  if (phone) {
+    phoneSeq += 1;
+    await asOwner(db, 'update public.profiles set phone = $2 where id = $1', [user.id, `+9170000${String(phoneSeq).padStart(5, '0')}`]);
+  }
   return user.id;
 }
 
