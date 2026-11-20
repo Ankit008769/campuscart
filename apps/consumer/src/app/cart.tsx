@@ -1,6 +1,7 @@
 import {
   DEFAULT_FEE_RULES,
   calculateBill,
+  deliveryCharge,
   deliverySurcharge,
   isNightDelivery,
   formatPaise,
@@ -111,7 +112,7 @@ export default function CartScreen() {
   });
   const night = mode === 'delivery' && isNightDelivery(deliverAt) && (rules.nightSurchargePaise ?? 0) > 0;
   const toPay = bill.totalPaise - discount + surcharge;
-  const shortOfFreeSmallCart = rules.smallCartLimitPaise - cart.subtotalPaise;
+  const shortOfFreeDelivery = rules.smallCartLimitPaise - cart.subtotalPaise;
   const canPlace = !placing && (mode === 'pickup' || !!dropPointId) && (!mustSchedule || !!slot);
 
   async function onPlaceOrder() {
@@ -249,16 +250,15 @@ export default function CartScreen() {
 
         <ThemedView type="backgroundElement" style={styles.card}>
           <BillRow label="Item total" paise={bill.subtotalPaise} />
-          {mode === 'delivery' && <BillRow label="Delivery fee" paise={bill.deliveryFeePaise} />}
-          {bill.smallCartFeePaise > 0 && <BillRow label="Small cart fee" paise={bill.smallCartFeePaise} />}
+          {mode === 'delivery' && <BillRow label="Delivery" paise={deliveryCharge(bill)} />}
           <BillRow label="Platform fee" paise={bill.platformFeePaise} />
           {surcharge > 0 && <BillRow label={night ? 'Night and distance charge' : 'Distance charge'} paise={surcharge} />}
           {discount > 0 && <BillRow label={`Coupon ${coupon?.code}`} paise={-discount} />}
           <View style={styles.divider} />
           <BillRow label="To pay" paise={toPay} bold />
-          {bill.smallCartFeePaise > 0 && shortOfFreeSmallCart > 0 && (
+          {bill.smallCartFeePaise > 0 && shortOfFreeDelivery > 0 && (
             <ThemedText type="small" themeColor="textSecondary">
-              Add {formatPaise(shortOfFreeSmallCart)} more to skip the small cart fee.
+              Add {formatPaise(shortOfFreeDelivery)} more for free delivery.
             </ThemedText>
           )}
         </ThemedView>
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
   segmentTextActive: {
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   input: {
     borderWidth: 1,
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   },
   placeText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   disabled: {

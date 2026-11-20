@@ -92,6 +92,26 @@ export async function listCategories(client: CampusClient) {
   return data;
 }
 
+/** A photo for each shop and category on Home: the first of its items, by name, that has one. */
+export async function homePhotos(client: CampusClient) {
+  const { data, error } = await client
+    .from('products')
+    .select('shop_id, category_id, image_path')
+    .eq('active', true)
+    .not('image_path', 'is', null)
+    .order('name')
+    .limit(1000);
+  if (error) throw error;
+  const byShop: Record<string, string> = {};
+  const byCategory: Record<string, string> = {};
+  for (const p of data) {
+    if (!p.image_path) continue;
+    byShop[p.shop_id] ??= p.image_path;
+    if (p.category_id) byCategory[p.category_id] ??= p.image_path;
+  }
+  return { byShop, byCategory };
+}
+
 /** The signed-in person's own profile. */
 export async function getMyProfile(client: CampusClient, userId: string) {
   const { data, error } = await client

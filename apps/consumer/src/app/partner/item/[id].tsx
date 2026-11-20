@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   size: {
     borderRadius: Radius.medium,
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   removeText: {
     color: Brand.red,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   error: {
     color: Brand.red,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   },
   saveText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   disabled: {

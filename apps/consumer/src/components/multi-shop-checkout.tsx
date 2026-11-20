@@ -1,5 +1,6 @@
 import {
   DEFAULT_FEE_RULES,
+  deliveryCharge,
   deliverySurcharge,
   formatPaise,
   getFeeRules,
@@ -230,8 +231,7 @@ export function MultiShopCheckout() {
         {preview && (
           <ThemedView type="backgroundElement" style={styles.card}>
             <BillRow label="Item total" paise={preview.bill.subtotalPaise} />
-            {preview.bill.deliveryFeePaise > 0 && <BillRow label="Delivery fee (once for the cart)" paise={preview.bill.deliveryFeePaise} />}
-            {preview.bill.smallCartFeePaise > 0 && <BillRow label="Small cart fee" paise={preview.bill.smallCartFeePaise} />}
+            {deliveryCharge(preview.bill) > 0 && <BillRow label="Delivery (once for the cart)" paise={deliveryCharge(preview.bill)} />}
             <BillRow label="Platform fee" paise={preview.bill.platformFeePaise} />
             {surcharge > 0 && <BillRow label="Distance and night charge" paise={surcharge} />}
             {discount > 0 && <BillRow label={`Coupon ${coupon?.code}`} paise={-discount} />}
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
   segmentTextActive: {
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   input: {
     borderWidth: 1,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   },
   remove: {
     color: Brand.red,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   error: {
     color: Brand.red,
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   },
   placeText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   disabled: {

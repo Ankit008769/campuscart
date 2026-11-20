@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   addText: {
     color: '#ffffff',
-    fontWeight: 700,
+    fontWeight: 600,
   },
   card: {
     borderRadius: Radius.medium,

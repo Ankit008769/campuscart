@@ -140,11 +140,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   code: {
-    fontWeight: 800,
+    fontWeight: 600,
   },
   remove: {
     color: Brand.red,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   offers: {
     gap: Spacing.two,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   offerCode: {
     color: Brand.green,
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 13,
   },
   offerText: {
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   },
   applyText: {
     color: Brand.green,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   error: {
     color: Brand.red,

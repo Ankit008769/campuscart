@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   },
   addText: {
     color: Brand.green,
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 14,
   },
   disabled: {
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   stepText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   pressed: {
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   qty: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 14,
     minWidth: 16,
     textAlign: 'center',

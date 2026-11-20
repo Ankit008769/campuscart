@@ -32,8 +32,6 @@ FOR CAMPUS SHOPS
 • Add counter staff, who take orders but never see your sales.
 • See weekly and monthly sales, day by day, and share them as a spreadsheet.
 
-DELIVER FOR CAMPUSCART
-Students can sign up as riders, deliver orders to hostels between classes, and get paid weekly by UPI.
 
 Sign in with your @nith.ac.in Google account. Shops sign in with the ID and password from the CampusCart team.
 

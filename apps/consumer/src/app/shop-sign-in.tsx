@@ -36,12 +36,12 @@ const styles = StyleSheet.create({
   back: {
     color: Brand.ink,
     fontSize: 16,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   title: {
     color: Brand.ink,
     fontSize: 28,
-    fontWeight: 800,
+    fontWeight: 600,
     marginTop: Spacing.four,
   },
   hint: {

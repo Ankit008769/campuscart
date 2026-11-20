@@ -67,17 +67,17 @@ const styles = StyleSheet.create({
   },
   items: {
     color: '#ffffff',
-    fontWeight: 600,
+    fontWeight: 500,
     fontSize: 13,
   },
   total: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   action: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
 });

@@ -48,7 +48,7 @@ function RootNavigator() {
   // admins get /admin, but only past the Authenticator code, which admin-sign-in asks for.
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
         <Stack.Protected guard={side === 'student'}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="shop/[id]" options={{ headerShown: true, title: '' }} />

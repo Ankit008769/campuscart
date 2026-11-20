@@ -1,9 +1,10 @@
 import type { OrderMode } from './orders';
 
 /**
- * Fee rules shown in the cart. The defaults come from the roadmap's revenue model;
- * in production the admin-edited `fee_rules` table overrides them, and the database
- * function `place_order` re-prices every order, so this is only a preview.
+ * Fee rules shown in the cart. In production the admin-edited `fee_rules` table overrides the
+ * defaults, and the database function `place_order` re-prices every order, so this is only a
+ * preview. CampusCart's delivery is the small-cart fee: ₹50 on deliveries under ₹250, free from
+ * there (the flat delivery fee is 0). Pickup never pays it. Screens show both as "Delivery".
  */
 export type FeeRules = {
   deliveryFeePaise: number;
@@ -15,11 +16,15 @@ export type FeeRules = {
 };
 
 export const DEFAULT_FEE_RULES: FeeRules = {
-  deliveryFeePaise: 1500,
-  smallCartLimitPaise: 9900,
-  smallCartFeePaise: 1000,
+  deliveryFeePaise: 0,
+  smallCartLimitPaise: 25000,
+  smallCartFeePaise: 5000,
   platformFeePaise: 400,
 };
+
+/** What a bill charges for delivery, both parts together, as the screens show it. */
+export const deliveryCharge = (bill: Pick<Bill, 'deliveryFeePaise' | 'smallCartFeePaise'>) =>
+  bill.deliveryFeePaise + bill.smallCartFeePaise;
 
 export type Bill = {
   subtotalPaise: number;

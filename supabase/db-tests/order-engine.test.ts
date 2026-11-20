@@ -63,13 +63,16 @@ test('can_transition agrees with canTransition for every status, mode and actor'
   assert.deepEqual(mismatches, []);
 });
 
+// seed.sql's fee rules, which these tests are written against (production's are set by admins).
+const SEED_FEES = { deliveryFeePaise: 1500, smallCartLimitPaise: 9900, smallCartFeePaise: 1000, platformFeePaise: 400 };
+
 test('calculate_bill agrees with calculateBill around the small-cart limit', async () => {
   for (const subtotal of [0, 1, 5000, 9899, 9900, 9901, 25000]) {
     for (const mode of ['delivery', 'pickup'] as const) {
       const [row] = (
         await db.query<Record<string, number>>(`select * from public.calculate_bill($1, $2::public.order_mode)`, [subtotal, mode])
       ).rows;
-      const expected = calculateBill(subtotal, mode);
+      const expected = calculateBill(subtotal, mode, SEED_FEES);
       assert.deepEqual(
         {
           subtotalPaise: row.subtotal_paise,

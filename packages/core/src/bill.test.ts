@@ -1,20 +1,30 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { calculateBill, deliverySurcharge } from './bill.ts';
+import { calculateBill, deliveryCharge, deliverySurcharge } from './bill.ts';
 
-test('small delivery orders pay delivery, small-cart and platform fees', () => {
-  assert.deepEqual(calculateBill(6000, 'delivery'), {
+test('deliveries under ₹250 pay ₹50 delivery and the ₹4 platform fee', () => {
+  const bill = calculateBill(6000, 'delivery');
+  assert.deepEqual(bill, {
     subtotalPaise: 6000,
-    deliveryFeePaise: 1500,
-    smallCartFeePaise: 1000,
+    deliveryFeePaise: 0,
+    smallCartFeePaise: 5000,
     platformFeePaise: 400,
-    totalPaise: 8900,
+    totalPaise: 11400,
   });
+  assert.equal(deliveryCharge(bill), 5000);
 });
 
-test('orders at the small-cart limit skip the small-cart fee', () => {
-  assert.equal(calculateBill(9900, 'delivery').smallCartFeePaise, 0);
+test('deliveries from ₹250 are free, apart from the platform fee', () => {
+  const bill = calculateBill(25000, 'delivery');
+  assert.equal(deliveryCharge(bill), 0);
+  assert.equal(bill.totalPaise, 25400);
+});
+
+test('a shop that also charges a flat delivery fee shows both parts as one delivery charge', () => {
+  const bill = calculateBill(6000, 'delivery', { deliveryFeePaise: 1500, smallCartLimitPaise: 9900, smallCartFeePaise: 1000, platformFeePaise: 400 });
+  assert.equal(deliveryCharge(bill), 2500);
+  assert.equal(bill.totalPaise, 8900);
 });
 
 test('pickup orders pay only the platform fee', () => {

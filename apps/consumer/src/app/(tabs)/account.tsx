@@ -14,7 +14,6 @@ import { useAuth } from '@/lib/auth';
 const ROWS: { icon: IconName; title: string; hint: string; href: Href }[] = [
   { icon: 'edit', title: 'Your profile', hint: 'Name, mobile number and usual hostel', href: '/profile' },
   { icon: 'print', title: 'Print Store', hint: 'Send a PDF, get it printed', href: '/print' },
-  { icon: 'rider', title: 'Deliver for CampusCart', hint: 'Earn by delivering to hostels', href: '/rider' },
 ];
 
 export default function AccountScreen() {
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: Brand.ink,
     fontSize: 24,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   flex: {
     flex: 1,
@@ -155,7 +154,7 @@ const styles = StyleSheet.create({
   signOutText: {
     color: Brand.red,
     fontSize: 15,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   error: {
     color: Brand.red,
