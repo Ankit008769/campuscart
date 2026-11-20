@@ -21,6 +21,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CouponBox, type AppliedCoupon } from '@/components/coupon-box';
+import { DropPointPicker } from '@/components/drop-point-picker';
 import { QtyStepper } from '@/components/qty-stepper';
 import { SmartPicks } from '@/components/smart-picks';
 import { ThemedText } from '@/components/themed-text';
@@ -47,6 +48,7 @@ export function MultiShopCheckout() {
 
   const [mode, setMode] = useState<OrderMode>('delivery');
   const [dropPointId, setDropPointId] = useState<string | null>(null);
+  const [usualDropPointId, setUsualDropPointId] = useState<string | null>(null);
   const [roomNote, setRoomNote] = useState('');
   const [payMethod, setPayMethod] = useState<PayMethod>('upi_at_handover');
   const [rules, setRules] = useState<FeeRules>(DEFAULT_FEE_RULES);
@@ -64,6 +66,7 @@ export function MultiShopCheckout() {
         if (!active) return;
         setRules(fees);
         setDropPoints(points);
+        setUsualDropPointId(profile.default_drop_point_id);
         if (points.some((p) => p.id === profile.default_drop_point_id)) setDropPointId(profile.default_drop_point_id);
         if (profile.room_note) setRoomNote(profile.room_note);
       },
@@ -197,13 +200,7 @@ export function MultiShopCheckout() {
         )}
         {mode === 'delivery' && (
           <>
-            <View style={styles.chips}>
-              {dropPoints.map((p) => (
-                <Pressable key={p.id} onPress={() => setDropPointId(p.id)} style={[styles.chip, dropPointId === p.id && styles.chipActive]}>
-                  <Text style={[styles.chipText, { color: dropPointId === p.id ? '#ffffff' : theme.text }]}>{p.name}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <DropPointPicker points={dropPoints} value={dropPointId} onChange={setDropPointId} usualId={usualDropPointId} />
             <TextInput
               value={roomNote}
               onChangeText={setRoomNote}
@@ -320,25 +317,6 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: '#ffffff',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: Brand.green,
-    borderRadius: 999,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + Spacing.half,
-  },
-  chipActive: {
-    backgroundColor: Brand.green,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: 500,
   },
   input: {
     borderWidth: 1,

@@ -20,6 +20,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
+import { DropPointPicker } from '@/components/drop-point-picker';
 import { QtyStepper } from '@/components/qty-stepper';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -251,16 +252,7 @@ export default function PrintScreen() {
               })}
             </View>
             {mode === 'delivery' && (
-              <View style={styles.chips}>
-                {dropPoints.map((point) => (
-                  <Pressable
-                    key={point.id}
-                    onPress={() => setDropPointId(point.id)}
-                    style={[styles.chip, dropPointId === point.id && styles.chipActive]}>
-                    <Text style={[styles.chipText, { color: dropPointId === point.id ? '#ffffff' : theme.text }]}>{point.name}</Text>
-                  </Pressable>
-                ))}
-              </View>
+              <DropPointPicker points={dropPoints} value={dropPointId} onChange={setDropPointId} />
             )}
 
             <ThemedText type="smallBold">How will you pay?</ThemedText>

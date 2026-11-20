@@ -20,6 +20,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CouponBox, type AppliedCoupon } from '@/components/coupon-box';
+import { DropPointPicker } from '@/components/drop-point-picker';
 import { MultiShopCheckout } from '@/components/multi-shop-checkout';
 import { QtyStepper } from '@/components/qty-stepper';
 import { SmartPicks } from '@/components/smart-picks';
@@ -51,6 +52,7 @@ export default function CartScreen() {
 
   const [mode, setMode] = useState<OrderMode>(shop?.doesDelivery === false ? 'pickup' : 'delivery');
   const [dropPointId, setDropPointId] = useState<string | null>(null);
+  const [usualDropPointId, setUsualDropPointId] = useState<string | null>(null);
   const [roomNote, setRoomNote] = useState('');
   const [payMethod, setPayMethod] = useState<PayMethod>('upi_at_handover');
   const [feeRules, setFeeRules] = useState<FeeRules | null>(null);
@@ -75,6 +77,7 @@ export default function CartScreen() {
         setFeeRules(fees);
         setDropPoints(points);
         // Start from the student's usual hostel and room; they can still change both for this order.
+        setUsualDropPointId(profile.default_drop_point_id);
         if (points.some((p) => p.id === profile.default_drop_point_id)) setDropPointId(profile.default_drop_point_id);
         if (profile.room_note) setRoomNote(profile.room_note);
       },
@@ -186,22 +189,8 @@ export default function CartScreen() {
           <>
             <ThemedText type="smallBold">Where should it come?</ThemedText>
             {!dropPoints && !error && <ActivityIndicator />}
-            <View style={styles.chips}>
-              {dropPoints?.map((point) => (
-                <Pressable
-                  key={point.id}
-                  onPress={() => setDropPointId(point.id)}
-                  style={[styles.chip, dropPointId === point.id && styles.chipActive]}>
-                  <Text style={[styles.chipText, { color: dropPointId === point.id ? '#ffffff' : theme.text }]}>
-                    {point.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            {chosenPoint?.gate_only && (
-              <ThemedText type="small" themeColor="textSecondary">
-                Orders for {chosenPoint.name} are handed over at the reception.
-              </ThemedText>
+            {dropPoints && (
+              <DropPointPicker points={dropPoints} value={dropPointId} onChange={setDropPointId} usualId={usualDropPointId} />
             )}
             <TextInput
               value={roomNote}
@@ -350,25 +339,6 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: '#ffffff',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: Brand.green,
-    borderRadius: 999,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + Spacing.half,
-  },
-  chipActive: {
-    backgroundColor: Brand.green,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: 500,
   },
   input: {
     borderWidth: 1,
