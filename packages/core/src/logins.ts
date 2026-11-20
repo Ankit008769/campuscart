@@ -51,11 +51,22 @@ export async function createShopLogin(client: CampusClient, login: NewShopLogin)
   return callShopLogins<{ profileId: string; loginId: string }>(client, { action: 'create', ...login });
 }
 
+/**
+ * Admins only: adds an ID someone already has to another shop, so one login takes the orders of
+ * several outlets of the same owner. Its password and other shops stay as they are.
+ */
+export async function linkShopLogin(client: CampusClient, shopId: string, loginId: string, staffRole: StaffJob) {
+  return callShopLogins<{ profileId: string; loginId: string }>(client, { action: 'link', shopId, loginId, staffRole });
+}
+
 export async function resetShopLoginPassword(client: CampusClient, shopId: string, profileId: string, password: string) {
   await callShopLogins(client, { action: 'reset', shopId, profileId, password });
 }
 
-/** Takes someone off the shop. An ID is locked for good; a Google account becomes an ordinary account. */
+/**
+ * Takes someone off the shop. An ID still at another outlet keeps working there; otherwise an ID is
+ * locked for good and a Google account becomes an ordinary account.
+ */
 export async function removeShopLogin(client: CampusClient, shopId: string, profileId: string) {
   await callShopLogins(client, { action: 'remove', shopId, profileId });
 }

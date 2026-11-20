@@ -1,4 +1,14 @@
-import { MIN_PASSWORD, createShopLogin, isLoginId, listShopStaff, loginIdOf, removeShopLogin, resetShopLoginPassword, type StaffJob } from '@campuscart/core';
+import {
+  MIN_PASSWORD,
+  createShopLogin,
+  isLoginId,
+  linkShopLogin,
+  listShopStaff,
+  loginIdOf,
+  removeShopLogin,
+  resetShopLoginPassword,
+  type StaffJob,
+} from '@campuscart/core';
 import { Brand, Radius } from '@campuscart/ui';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -24,11 +34,16 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [job, setJob] = useState<StaffJob>(admin ? 'owner' : 'counter');
+  // Admins can add an ID that already runs another outlet, instead of making a new one.
+  const [existing, setExisting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   // The one row showing its new-password box or its remove confirmation.
-  const [open, setOpen] = useState<{ profileId: string; action: 'password' | 'remove' } | null>(null);
+  const [open, setOpen] = useState<{
+    profileId: string;
+    action: 'password' | 'remove';
+  } | null>(null);
   const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
@@ -43,7 +58,7 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
   }, [shopId, version]);
 
   const inputStyle = [styles.input, { color: theme.text, borderColor: theme.backgroundSelected }];
-  const ready = isLoginId(loginId) && password.length >= MIN_PASSWORD;
+  const ready = isLoginId(loginId.trim().toLowerCase()) && (existing || password.length >= MIN_PASSWORD);
 
   async function run(work: () => Promise<void>, done: string) {
     setBusy(true);
@@ -63,8 +78,20 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
 
   function add() {
     const id = loginId.trim().toLowerCase();
+    if (existing) {
+      return run(async () => {
+        await linkShopLogin(supabase, shopId, id, job);
+        setLoginId('');
+      }, `${id} now gets this shop's orders too, with the same password.`);
+    }
     return run(async () => {
-      await createShopLogin(supabase, { shopId, loginId: id, password, name, staffRole: job });
+      await createShopLogin(supabase, {
+        shopId,
+        loginId: id,
+        password,
+        name,
+        staffRole: job,
+      });
       setName('');
       setLoginId('');
       setPassword('');
@@ -96,7 +123,14 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
             {canChange(member) && (
               <View style={styles.row}>
                 {id && (
-                  <Pressable accessibilityRole="button" onPress={() => setOpen({ profileId: member.profile_id, action: 'password' })}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() =>
+                      setOpen({
+                        profileId: member.profile_id,
+                        action: 'password',
+                      })
+                    }>
                     <Text style={styles.link}>New password</Text>
                   </Pressable>
                 )}
@@ -120,7 +154,9 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
                 <Pressable
                   accessibilityRole="button"
                   disabled={busy || newPassword.length < MIN_PASSWORD}
-                  onPress={() => run(() => resetShopLoginPassword(supabase, shopId, member.profile_id, newPassword), `New password set for ${id}.`)}
+                  onPress={() =>
+                    run(() => resetShopLoginPassword(supabase, shopId, member.profile_id, newPassword), `New password set for ${id}.`)
+                  }
                   style={[styles.chip, (busy || newPassword.length < MIN_PASSWORD) && styles.disabled]}>
                   <Text style={styles.chipText}>Save</Text>
                 </Pressable>
@@ -129,7 +165,8 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
             {showing === 'remove' && (
               <View style={styles.row}>
                 <ThemedText type="small" style={styles.flex}>
-                  {label} will no longer see this shop&apos;s orders.
+                  {label} will no longer see this shop&apos;s orders
+                  {id ? '; if this is their last shop, the ID stops working' : ''}.
                 </ThemedText>
                 <Pressable accessibilityRole="button" onPress={() => setOpen(null)}>
                   <Text style={styles.link}>Keep</Text>
@@ -151,28 +188,44 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
           Counter staff take orders and change stock. They don&apos;t see sales, commission or staff.
         </ThemedText>
       )}
-      <ThemedText type="smallBold">{admin ? 'Add a login' : 'Add counter staff'}</ThemedText>
-      <TextInput value={name} onChangeText={setName} placeholder="Their name" placeholderTextColor={theme.textSecondary} accessibilityLabel="Their name" style={inputStyle} />
+      <ThemedText type="smallBold">{admin ? (existing ? 'Add an ID they already have' : 'Add a login') : 'Add counter staff'}</ThemedText>
+      {admin && (
+        <Pressable accessibilityRole="button" onPress={() => setExisting((on) => !on)}>
+          <Text style={styles.link}>{existing ? 'Make a new ID instead' : 'Same owner runs another outlet? Use their existing ID'}</Text>
+        </Pressable>
+      )}
+      {!existing && (
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="Their name"
+          placeholderTextColor={theme.textSecondary}
+          accessibilityLabel="Their name"
+          style={inputStyle}
+        />
+      )}
       <TextInput
         value={loginId}
         onChangeText={setLoginId}
         autoCapitalize="none"
         autoCorrect={false}
-        placeholder="ID, like 4h.counter"
+        placeholder={existing ? 'Their ID, like sahil.booth4' : 'ID, like 4h.counter'}
         placeholderTextColor={theme.textSecondary}
         accessibilityLabel="ID"
         style={inputStyle}
       />
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        autoCapitalize="none"
-        autoCorrect={false}
-        placeholder={`Password, at least ${MIN_PASSWORD} characters`}
-        placeholderTextColor={theme.textSecondary}
-        accessibilityLabel="Password"
-        style={inputStyle}
-      />
+      {!existing && (
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholder={`Password, at least ${MIN_PASSWORD} characters`}
+          placeholderTextColor={theme.textSecondary}
+          accessibilityLabel="Password"
+          style={inputStyle}
+        />
+      )}
       <View style={styles.row}>
         {admin &&
           (['owner', 'counter'] as const).map((choice) => (
@@ -185,8 +238,12 @@ export function ShopLogins({ shopId, admin = false }: { shopId: string; admin?: 
               <Text style={[styles.chipText, job === choice && styles.chipTextActive]}>{choice === 'owner' ? 'Owner' : 'Counter'}</Text>
             </Pressable>
           ))}
-        <Pressable accessibilityRole="button" disabled={busy || !ready} onPress={add} style={[styles.add, (busy || !ready) && styles.disabled]}>
-          <Text style={styles.addText}>Add login</Text>
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy || !ready}
+          onPress={add}
+          style={[styles.add, (busy || !ready) && styles.disabled]}>
+          <Text style={styles.addText}>{existing ? 'Add to this shop' : 'Add login'}</Text>
         </Pressable>
       </View>
       {message && <ThemedText type="small">{message}</ThemedText>}

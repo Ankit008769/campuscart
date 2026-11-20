@@ -10,17 +10,7 @@ import {
 } from '@campuscart/core';
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ShopRiderCash } from '@/components/shop-rider-cash';
@@ -30,7 +20,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { loadMyShop, type MyShop } from '@/lib/my-shop';
+import { loadMyShops, type MyShop } from '@/lib/my-shop';
 import { useNewOrderAlarm } from '@/lib/new-order-alarm';
 import { supabase } from '@/lib/supabase';
 
@@ -48,19 +38,20 @@ const PAY_LABEL = { cash: 'cash', upi_at_handover: 'UPI' } as const;
 export default function OrdersScreen() {
   const { session, signOut } = useAuth();
   const signedInAs = loginIdOf(session?.user.email) ?? session?.user.email;
-  // undefined while loading, null when the account has no shop.
-  const [shop, setShop] = useState<MyShop | null | undefined>(undefined);
+  // Every outlet this login takes orders for (one owner can run several on one phone).
+  // undefined while loading, empty when the account has no shop.
+  const [shops, setShops] = useState<MyShop[] | undefined>(undefined);
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [savingOpen, setSavingOpen] = useState(false);
+  const [savingOpen, setSavingOpen] = useState<string | null>(null);
   const [tab, setTab] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const alarm = useNewOrderAlarm(orders.filter((o) => o.status === 'placed').map((o) => o.id));
 
   useEffect(() => {
     let active = true;
-    loadMyShop().then(
-      (found) => active && setShop(found),
+    loadMyShops().then(
+      (found) => active && setShops(found),
       (e: unknown) => active && setError(e instanceof Error ? e.message : 'Could not load your shop.'),
     );
     return () => {
@@ -68,23 +59,24 @@ export default function OrdersScreen() {
     };
   }, []);
 
-  // Live orders: reload on every change. New orders ring through useNewOrderAlarm.
-  const shopId = shop?.id;
+  // Live orders from every outlet: reload on any change. New orders ring through useNewOrderAlarm.
+  const shopIds = shops?.map((s) => s.id).join(',') ?? '';
   useEffect(() => {
-    if (!shopId) return;
+    if (!shopIds) return;
+    const ids = shopIds.split(',');
     let active = true;
     const load = () =>
-      listShopOrders(supabase, shopId).then(
+      listShopOrders(supabase, ids).then(
         (next) => active && setOrders(next),
         (e: unknown) => active && setError(e instanceof Error ? e.message : 'Could not load orders.'),
       );
     load();
-    const unsubscribe = watchOrders(supabase, `shop_id=eq.${shopId}`, load);
+    const unsubscribes = ids.map((id) => watchOrders(supabase, `shop_id=eq.${id}`, load));
     return () => {
       active = false;
-      unsubscribe();
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
-  }, [shopId]);
+  }, [shopIds]);
 
   // Keep the "accept within" countdowns moving.
   useEffect(() => {
@@ -92,9 +84,8 @@ export default function OrdersScreen() {
     return () => clearInterval(timer);
   }, []);
 
-  async function setOpen(isOpen: boolean) {
-    if (!shop) return;
-    setSavingOpen(true);
+  async function setOpen(shop: MyShop, isOpen: boolean) {
+    setSavingOpen(shop.id);
     setError(null);
     const { data, error: saveError } = await supabase
       .from('shops')
@@ -103,19 +94,20 @@ export default function OrdersScreen() {
       .select('is_open')
       .single();
     if (saveError) setError(saveError.message);
-    else setShop({ ...shop, is_open: data.is_open });
-    setSavingOpen(false);
+    else setShops((prev) => prev?.map((s) => (s.id === shop.id ? { ...s, is_open: data.is_open } : s)));
+    setSavingOpen(null);
   }
 
   const visible = orders.filter((o) => TABS[tab].statuses.includes(o.status));
+  const several = (shops?.length ?? 0) > 1;
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
-          {shop === undefined && !error && <ActivityIndicator style={styles.loading} />}
+          {shops === undefined && !error && <ActivityIndicator style={styles.loading} />}
 
-          {shop === null && (
+          {shops?.length === 0 && (
             <ThemedView type="backgroundElement" style={styles.card}>
               <ThemedText type="smallBold">This account isn&apos;t linked to a shop yet</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -124,9 +116,14 @@ export default function OrdersScreen() {
             </ThemedView>
           )}
 
-          {shop && (
+          {shops && shops.length > 0 && (
             <>
-              <ThemedText type="subtitle">{shop.name}</ThemedText>
+              <ThemedText type="subtitle">{several ? 'Orders' : shops[0].name}</ThemedText>
+              {several && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  Every order from {shops.map((s) => s.name).join(', ')} comes here. Each card says which outlet it is for.
+                </ThemedText>
+              )}
 
               {alarm.ringing && (
                 <Pressable
@@ -138,20 +135,26 @@ export default function OrdersScreen() {
                   }}
                   style={styles.alarm}>
                   <Text style={styles.alarmTitle}>New order! Tap to stop the ringing</Text>
-                  <Text style={styles.alarmText}>
-                    Accept or reject it within {ACCEPT_WINDOW_MS / 60000} minutes, or it is cancelled.
-                  </Text>
+                  <Text style={styles.alarmText}>Accept or reject it within {ACCEPT_WINDOW_MS / 60000} minutes, or it is cancelled.</Text>
                 </Pressable>
               )}
 
               <ThemedView type="backgroundElement" style={styles.card}>
-                <View style={styles.row}>
-                  <ThemedText type="smallBold" style={styles.flex}>
-                    Accepting orders
-                  </ThemedText>
-                  <Switch value={shop.is_open} onValueChange={setOpen} disabled={savingOpen} trackColor={{ true: Brand.green }} />
-                </View>
-                <StatusBadge label={shop.is_open ? 'Shop open' : 'Shop closed'} tone={shop.is_open ? 'good' : 'bad'} />
+                {shops.map((shop) => (
+                  <View key={shop.id} style={styles.row}>
+                    <View style={[styles.flex, styles.openLabel]}>
+                      <ThemedText type="smallBold">{several ? shop.name : 'Accepting orders'}</ThemedText>
+                      <StatusBadge label={shop.is_open ? 'Open' : 'Closed'} tone={shop.is_open ? 'good' : 'bad'} />
+                    </View>
+                    <Switch
+                      accessibilityLabel={`${shop.name} accepting orders`}
+                      value={shop.is_open}
+                      onValueChange={(isOpen) => setOpen(shop, isOpen)}
+                      disabled={savingOpen === shop.id}
+                      trackColor={{ true: Brand.green }}
+                    />
+                  </View>
+                ))}
               </ThemedView>
 
               <View style={styles.tabs}>
@@ -178,10 +181,19 @@ export default function OrdersScreen() {
               )}
 
               {visible.map((order) => (
-                <OrderCard key={order.id} order={order} now={now} onError={setError} onHandled={alarm.handled} />
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  outlet={several ? order.shops?.name : undefined}
+                  now={now}
+                  onError={setError}
+                  onHandled={alarm.handled}
+                />
               ))}
 
-              <ShopRiderCash shopId={shop.id} orders={orders} />
+              {shops.map((shop) => (
+                <ShopRiderCash key={shop.id} shopId={shop.id} orders={orders} />
+              ))}
             </>
           )}
 
@@ -203,11 +215,14 @@ export default function OrdersScreen() {
 
 function OrderCard({
   order,
+  outlet,
   now,
   onError,
   onHandled,
 }: {
   order: Order;
+  /** Which outlet it is for, when this login takes orders for several. */
+  outlet?: string;
   now: number;
   onError: (message: string | null) => void;
   onHandled: (orderId: string) => void;
@@ -241,6 +256,13 @@ function OrderCard({
         <ThemedText type="smallBold" style={styles.flex}>
           #{order.token_no} · {order.mode === 'delivery' ? 'Delivery' : 'Pickup'}
         </ThemedText>
+        {outlet && (
+          <View style={styles.outlet}>
+            <Text style={styles.outletText} numberOfLines={1}>
+              {outlet}
+            </Text>
+          </View>
+        )}
         <ThemedText type="small" themeColor="textSecondary">
           {placedAgoMin === 0 ? 'just now' : `${placedAgoMin} min ago`}
         </ThemedText>
@@ -248,7 +270,11 @@ function OrderCard({
 
       {order.status === 'placed' && (
         <StatusBadge
-          label={acceptLeftSec > 0 ? `Accept within ${Math.floor(acceptLeftSec / 60)}:${String(acceptLeftSec % 60).padStart(2, '0')}` : 'Expiring'}
+          label={
+            acceptLeftSec > 0
+              ? `Accept within ${Math.floor(acceptLeftSec / 60)}:${String(acceptLeftSec % 60).padStart(2, '0')}`
+              : 'Expiring'
+          }
           tone="bad"
         />
       )}
@@ -300,9 +326,7 @@ function OrderCard({
                 (e: unknown) => onError(e instanceof Error ? e.message : 'Could not open the PDF.'),
               );
             }}>
-            <ThemedText type="linkPrimary">
-              Open the PDF to print ({order.print_jobs.double_sided ? 'both sides' : 'one side'})
-            </ThemedText>
+            <ThemedText type="linkPrimary">Open the PDF to print ({order.print_jobs.double_sided ? 'both sides' : 'one side'})</ThemedText>
           </Pressable>
         ))}
       <ThemedText type="smallBold">
@@ -312,7 +336,12 @@ function OrderCard({
       {order.status === 'placed' && !rejecting && (
         <View style={styles.actions}>
           {PREP_CHOICES.map((minutes) => (
-            <ActionButton key={minutes} label={`Accept · ${minutes} min`} disabled={busy} onPress={() => move('accepted', { prepMinutes: minutes })} />
+            <ActionButton
+              key={minutes}
+              label={`Accept · ${minutes} min`}
+              disabled={busy}
+              onPress={() => move('accepted', { prepMinutes: minutes })}
+            />
           ))}
           <ActionButton label="Reject" tone="bad" disabled={busy} onPress={() => setRejecting(true)} />
         </View>
@@ -325,9 +354,7 @@ function OrderCard({
           <ActionButton label="Back" tone="quiet" disabled={busy} onPress={() => setRejecting(false)} />
         </View>
       )}
-      {order.status === 'accepted' && (
-        <ActionButton label="Mark packed and ready" disabled={busy} onPress={() => move('ready')} />
-      )}
+      {order.status === 'accepted' && <ActionButton label="Mark packed and ready" disabled={busy} onPress={() => move('ready')} />}
       {order.status === 'ready' && order.mode === 'delivery' && (
         <ActionButton
           label={order.rider ? 'Handed to the rider' : 'Out for delivery'}
@@ -354,7 +381,11 @@ function OrderCard({
           <ActionButton
             label={order.mode === 'delivery' ? 'Delivered' : 'Handed over'}
             disabled={busy || code.length === 0}
-            onPress={() => move(order.mode === 'delivery' ? 'delivered' : 'collected', { code })}
+            onPress={() =>
+              move(order.mode === 'delivery' ? 'delivered' : 'collected', {
+                code,
+              })
+            }
           />
         </View>
       )}
@@ -379,7 +410,14 @@ function ActionButton({
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
-      style={[styles.action, { borderColor: color, backgroundColor: tone === 'good' ? color : 'transparent' }, disabled && styles.disabled]}>
+      style={[
+        styles.action,
+        {
+          borderColor: color,
+          backgroundColor: tone === 'good' ? color : 'transparent',
+        },
+        disabled && styles.disabled,
+      ]}>
       <Text style={[styles.actionText, { color: tone === 'good' ? '#ffffff' : color }]}>{label}</Text>
     </Pressable>
   );
@@ -429,6 +467,22 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  openLabel: {
+    gap: Spacing.one,
+    alignItems: 'flex-start',
+  },
+  outlet: {
+    backgroundColor: Brand.green,
+    borderRadius: 999,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    maxWidth: 140,
+  },
+  outletText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 600,
   },
   tabs: {
     flexDirection: 'row',
