@@ -15,11 +15,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OutletSwitcher } from '@/components/outlet-switcher';
 import { ShopLogins } from '@/components/shop-logins';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { loadMyShop, type MyShop } from '@/lib/my-shop';
+import { chooseOutlet, loadMyShop, loadMyShops, type MyShop } from '@/lib/my-shop';
 import { supabase } from '@/lib/supabase';
 
 type ReportDay = Awaited<ReturnType<typeof shopReport>>[number];
@@ -31,11 +32,23 @@ const messageOf = (e: unknown) => (e instanceof Error ? e.message : 'Something w
 export default function ShopScreen() {
   // undefined while loading, null when the account has no shop.
   const [shop, setShop] = useState<MyShop | null | undefined>(undefined);
+  const [shops, setShops] = useState<MyShop[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
-    loadMyShop().then(setShop, (e: unknown) => setError(messageOf(e)));
+    Promise.all([loadMyShops(), loadMyShop()]).then(
+      ([all, one]) => {
+        setShops(all);
+        setShop(one);
+      },
+      (e: unknown) => setError(messageOf(e)),
+    );
   }, []);
+
+  function pickOutlet(next: MyShop) {
+    setShop(next);
+    chooseOutlet(next.id);
+  }
   useFocusEffect(reload);
 
   async function rush(minutes: number | null) {
@@ -54,6 +67,7 @@ export default function ShopScreen() {
       <SafeAreaView edges={['top']} style={styles.container}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <ThemedText type="subtitle">Shop</ThemedText>
+          <OutletSwitcher shops={shops} value={shop?.id} onChange={pickOutlet} />
           {shop === undefined && !error && <ActivityIndicator />}
           {error && <Text style={styles.error}>{error}</Text>}
           {shop === null && (
@@ -79,7 +93,9 @@ export default function ShopScreen() {
                   ) : (
                     RUSH_CHOICES.map((minutes) => (
                       <Pressable key={minutes} accessibilityRole="button" onPress={() => rush(minutes)} style={styles.chip}>
-                        <Text style={styles.chipText}>{minutes < 60 ? `${minutes} min` : `${minutes / 60} hour${minutes > 60 ? 's' : ''}`}</Text>
+                        <Text style={styles.chipText}>
+                          {minutes < 60 ? `${minutes} min` : `${minutes / 60} hour${minutes > 60 ? 's' : ''}`}
+                        </Text>
                       </Pressable>
                     ))
                   )}
@@ -163,7 +179,11 @@ function Reports({ shopId }: { shopId: string }) {
           {days.map((d) => (
             <View key={d.day} style={styles.row}>
               <ThemedText type="small" style={styles.flex}>
-                {new Date(`${d.day}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
+                {new Date(`${d.day}T00:00:00`).toLocaleDateString('en-IN', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                })}
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 {d.completed}/{d.orders} orders
@@ -187,7 +207,12 @@ function Reports({ shopId }: { shopId: string }) {
           <Pressable
             accessibilityRole="button"
             disabled={days.length === 0}
-            onPress={() => Share.share({ title: `Sales, ${period.label.toLowerCase()}`, message: reportCsv(days) })}>
+            onPress={() =>
+              Share.share({
+                title: `Sales, ${period.label.toLowerCase()}`,
+                message: reportCsv(days),
+              })
+            }>
             <ThemedText type="linkPrimary">Share as a spreadsheet (CSV)</ThemedText>
           </Pressable>
         </>

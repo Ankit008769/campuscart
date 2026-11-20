@@ -5,16 +5,21 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, SectionList, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OutletSwitcher } from '@/components/outlet-switcher';
 import { ProductImage } from '@/components/product-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { loadMyShop, type MyShop } from '@/lib/my-shop';
+import { chooseOutlet, loadMyShop, loadMyShops, type MyShop } from '@/lib/my-shop';
 import { supabase } from '@/lib/supabase';
 
-
 type Item = Awaited<ReturnType<typeof listShopCatalog>>[number];
-type Section = { title: string; categoryId: string | null; sort: number; data: Item[] };
+type Section = {
+  title: string;
+  categoryId: string | null;
+  sort: number;
+  data: Item[];
+};
 
 function sectionsOf(items: Item[]): Section[] {
   const byCategory = new Map<string, Section>();
@@ -33,13 +38,18 @@ function sectionsOf(items: Item[]): Section[] {
 }
 
 async function loadCatalog() {
-  const myShop = await loadMyShop();
-  return { myShop, catalog: myShop ? await listShopCatalog(supabase, myShop.id) : [] };
+  const [myShops, myShop] = await Promise.all([loadMyShops(), loadMyShop()]);
+  return {
+    myShops,
+    myShop,
+    catalog: myShop ? await listShopCatalog(supabase, myShop.id) : [],
+  };
 }
 
 export default function CatalogScreen() {
   // undefined while loading, null when the account has no shop.
   const [shop, setShop] = useState<MyShop | null | undefined>(undefined);
+  const [shops, setShops] = useState<MyShop[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,8 +58,9 @@ export default function CatalogScreen() {
     useCallback(() => {
       let active = true;
       loadCatalog().then(
-        ({ myShop, catalog }) => {
+        ({ myShops, myShop, catalog }) => {
           if (!active) return;
+          setShops(myShops);
           setShop(myShop);
           setItems(catalog);
           setError(null);
@@ -62,6 +73,13 @@ export default function CatalogScreen() {
     }, []),
   );
 
+  /** Shows another outlet's menu and stock; the item editor and scanner follow the same pick. */
+  function pickOutlet(next: MyShop) {
+    setShop(next);
+    setItems([]);
+    chooseOutlet(next.id).then(() => run(async () => {}));
+  }
+
   /** Saves one change, then shows the catalog as the database now has it. */
   async function run(change: () => Promise<unknown>) {
     setError(null);
@@ -71,7 +89,8 @@ export default function CatalogScreen() {
       setError(e instanceof Error ? e.message : 'Could not save that change.');
     }
     try {
-      const { myShop, catalog } = await loadCatalog();
+      const { myShops, myShop, catalog } = await loadCatalog();
+      setShops(myShops);
       setShop(myShop);
       setItems(catalog);
     } catch {
@@ -101,12 +120,18 @@ export default function CatalogScreen() {
                 {shop && (
                   <Pressable
                     accessibilityRole="button"
-                    onPress={() => router.push({ pathname: '/partner/item/[id]', params: { id: 'new' } })}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/partner/item/[id]',
+                        params: { id: 'new' },
+                      })
+                    }
                     style={styles.addButton}>
                     <Text style={styles.addText}>+ Add item</Text>
                   </Pressable>
                 )}
               </View>
+              <OutletSwitcher shops={shops} value={shop?.id} onChange={pickOutlet} />
               {shop === undefined && !error && <ActivityIndicator style={styles.loading} />}
               {shop === null && (
                 <ThemedText type="small" themeColor="textSecondary">
@@ -147,7 +172,12 @@ export default function CatalogScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityHint="Opens the item editor"
-                onPress={() => router.push({ pathname: '/partner/item/[id]', params: { id: item.id } })}
+                onPress={() =>
+                  router.push({
+                    pathname: '/partner/item/[id]',
+                    params: { id: item.id },
+                  })
+                }
                 style={styles.row}>
                 {item.image_path ? (
                   <ProductImage path={item.image_path} style={styles.photo} label={item.name} />

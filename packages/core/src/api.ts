@@ -349,12 +349,15 @@ export async function listMyOrders(client: CampusClient, studentId: string) {
 
 export const OPEN_STATUSES = ['placed', 'accepted', 'ready', 'out_for_delivery'] as const satisfies readonly OrderStatus[];
 
-/** A shop's open orders, oldest first, so the counter works through them in order. */
-export async function listShopOrders(client: CampusClient, shopId: string) {
+/**
+ * A shop's open orders, oldest first, so the counter works through them in order. Pass several
+ * shop ids to get every outlet of one owner together, for a login that runs them all.
+ */
+export async function listShopOrders(client: CampusClient, shopIds: string | readonly string[]) {
   const { data, error } = await client
     .from('orders')
     .select(ORDER_DETAIL)
-    .eq('shop_id', shopId)
+    .in('shop_id', typeof shopIds === 'string' ? [shopIds] : [...shopIds])
     .in('status', OPEN_STATUSES)
     .order('placed_at');
   if (error) throw error;

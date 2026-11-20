@@ -92,6 +92,36 @@ Deno.serve(async (req) => {
     return reply({ profileId: data.user.id, loginId });
   }
 
+  // Admins only: puts an ID that already exists at another outlet of the same owner, so one login
+  // takes the orders of several outlets. The ID keeps its password and its other outlets.
+  if (action === 'link') {
+    const { staffRole } = body;
+    const loginId = typeof body.loginId === 'string' ? body.loginId.trim().toLowerCase() : '';
+    if (staffRole !== 'owner' && staffRole !== 'counter') return reply({ error: 'Owner or counter?' }, 400);
+    const { data: isAdmin } = await asCaller.rpc('is_admin');
+    if (isAdmin !== true) return notAllowed();
+    if (!LOGIN_ID.test(loginId)) return reply({ error: 'That isn’t an ID.' }, 400);
+    const { data: person } = await admin
+      .from('profiles')
+      .select('id, role, blocked')
+      .eq('email', `${loginId}@${LOGIN_DOMAIN}`)
+      .maybeSingle();
+    if (!person || person.blocked || (person.role !== 'merchant_owner' && person.role !== 'merchant_staff')) {
+      return reply({ error: 'No working shop ID called that. Check the spelling, or add a new login instead.' }, 404);
+    }
+    const { error } = await admin
+      .from('shop_staff')
+      .upsert({ shop_id: shopId, profile_id: person.id, role: staffRole }, { onConflict: 'shop_id,profile_id' });
+    if (error) {
+      console.error('Linking staff failed', error.message);
+      return reply({ error: 'Could not add the ID to this shop. Try again.' }, 500);
+    }
+    if (staffRole === 'owner' && person.role !== 'merchant_owner') {
+      await admin.from('profiles').update({ role: 'merchant_owner' }).eq('id', person.id);
+    }
+    return reply({ profileId: person.id, loginId });
+  }
+
   // Resetting and removing act on someone already at this shop.
   const { profileId } = body;
   if (typeof profileId !== 'string') return reply({ error: 'Which login?' }, 400);
@@ -107,6 +137,12 @@ Deno.serve(async (req) => {
 
   if (action === 'reset') {
     if (!hasPassword) return reply({ error: 'This person signs in with Google. Give them a new ID instead.' }, 400);
+    // A login that runs several outlets: the caller must be allowed to manage it at each of them.
+    const { data: memberships } = await admin.from('shop_staff').select('shop_id, role').eq('profile_id', profileId);
+    for (const m of memberships ?? []) {
+      const { data: ok } = await asCaller.rpc('can_manage_shop_logins', { p_shop_id: m.shop_id, p_staff_role: m.role });
+      if (ok !== true) return notAllowed();
+    }
     const problem = passwordProblem(body.password);
     if (problem) return reply({ error: problem }, 400);
     const { error } = await admin.auth.admin.updateUserById(profileId, { password: body.password as string });
@@ -123,8 +159,11 @@ Deno.serve(async (req) => {
       console.error('Removing staff failed', error.message);
       return reply({ error: 'Could not remove the login. Try again.' }, 500);
     }
-    // An ID exists only for this shop, so it is locked for good. A Google account is a person's own,
-    // and goes back to being an ordinary account.
+    // Still at another outlet (one owner's login can run several): it keeps working there.
+    const { count } = await admin.from('shop_staff').select('shop_id', { count: 'exact', head: true }).eq('profile_id', profileId);
+    if ((count ?? 0) > 0) return reply({ ok: true });
+    // An ID exists only for its shops, so once it is at none it is locked for good. A Google account
+    // is a person's own, and goes back to being an ordinary account.
     if (hasPassword) {
       await admin.from('profiles').update({ blocked: true }).eq('id', profileId);
       await admin.auth.admin.updateUserById(profileId, { ban_duration: FOREVER });
