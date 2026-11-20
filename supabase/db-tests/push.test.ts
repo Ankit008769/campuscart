@@ -117,7 +117,18 @@ test('a phone that signs into another account moves its token, and bad tokens ar
   assert.deepEqual(owners, [{ user_id: friend }]);
 
   await as(db, friend, async () => {
-    await assert.rejects(db.query(`select public.register_device_token('consumer', 'not-a-token')`), /Not an Expo push token/);
+    await assert.rejects(db.query(`select public.register_device_token('consumer', 'not-a-token')`), /Not a push token/);
+  });
+});
+
+test('Android phones can register their Firebase token instead', async () => {
+  const fcm = `fXyZ12-ab_cd:APA91b${'Hk3_x-Q9'.repeat(18)}`;
+  await as(db, student, () => db.query(`select public.register_device_token('consumer', $1)`, [fcm]));
+  const rows = await asOwner(db, 'select app from public.device_tokens where expo_token = $1', [fcm]);
+  assert.deepEqual(rows, [{ app: 'consumer' }]);
+  await as(db, student, async () => {
+    await assert.rejects(db.query(`select public.register_device_token('consumer', 'short:token')`), /Not a push token/);
+    await assert.rejects(db.query(`select public.register_device_token('consumer', $1)`, [`${'a'.repeat(120)} ${'b'.repeat(10)}`]), /Not a push token/);
   });
 });
 

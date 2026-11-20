@@ -16,6 +16,7 @@ const supported = () => Platform.OS !== 'web' && Device.isDevice;
 
 // The token this phone saved for the signed-in person, so signing out can remove it.
 let savedToken: string | null = null;
+let tokenListener: Notifications.EventSubscription | null = null;
 
 /**
  * Creates the Android channel the server sends this side's pushes to. Each side has its own channel
@@ -61,14 +62,33 @@ export async function registerForOrderPushes(side: Side): Promise<void> {
   if (status !== 'granted') ({ status } = await Notifications.requestPermissionsAsync());
   if (status !== 'granted') return;
 
-  const projectId: string | undefined = Constants.expoConfig?.extra?.eas?.projectId;
-  const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
-  await registerDeviceToken(supabase, side === 'shop' ? 'merchant' : 'consumer', token);
+  // Android gets its Firebase token, which send-push delivers to directly (free, no Expo account);
+  // anything else falls back to an Expo push token.
+  const token =
+    Platform.OS === 'android'
+      ? ((await Notifications.getDevicePushTokenAsync()).data as string)
+      : (await Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig?.extra?.eas?.projectId })).data;
+  const app = side === 'shop' ? 'merchant' : 'consumer';
+  await registerDeviceToken(supabase, app, token);
   savedToken = token;
+
+  // Firebase can rotate a phone's token; keep the saved one current.
+  tokenListener?.remove();
+  tokenListener = Notifications.addPushTokenListener(({ data }) => {
+    if (typeof data !== 'string' || data === savedToken) return;
+    registerDeviceToken(supabase, app, data).then(
+      () => {
+        savedToken = data;
+      },
+      (e: unknown) => console.warn('Could not update the push token', e),
+    );
+  });
 }
 
 /** Stops pushes to this phone, so whoever signs in next doesn't get this person's orders. */
 export async function forgetThisPhone(): Promise<void> {
+  tokenListener?.remove();
+  tokenListener = null;
   if (!savedToken) return;
   const token = savedToken;
   savedToken = null;
