@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from '@/lib/auth';
 import { CartProvider } from '@/lib/cart';
 import { logStep } from '@/lib/events';
 import { registerForOrderPushes, useOpenTappedOrder } from '@/lib/push';
+import { UpdateRequired, useUpdateRequired } from '@/lib/update-gate';
 
 // A crash in any screen shows AppError with a Try again button instead of a blank page.
 export { AppError as ErrorBoundary };
@@ -30,6 +31,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { session, side, needsAdminCode, loading } = useAuth();
+  const updateRequired = useUpdateRequired();
   const userId = session?.user.id;
 
   useEffect(() => {
@@ -42,6 +44,9 @@ function RootNavigator() {
     registerForOrderPushes(side).catch((e: unknown) => console.warn('Could not turn on order notifications', e));
   }, [userId, side]);
   useOpenTappedOrder(side === 'admin' ? null : side);
+
+  // Admins can require a newer build (app_settings); nothing else opens until it is installed.
+  if (updateRequired) return <UpdateRequired />;
 
   // Signed out (or still finding out the side) shows sign-in, where people pick student or shop.
   // Students get the ordering screens; shop owners and counter staff get the shop screens under /partner;

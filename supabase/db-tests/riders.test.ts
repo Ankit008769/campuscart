@@ -25,8 +25,8 @@ before(async () => {
   admin = await addUser(db, 'rider.admin@gmail.com', 'Ops');
   owner = await addUser(db, 'rider.shop@gmail.com', 'General Owner');
   student = await addUser(db, '23bce101@nith.ac.in', 'Tanya');
-  riderA = await addUser(db, '22bme201@nith.ac.in', 'Arjun');
-  riderB = await addUser(db, '22bme202@nith.ac.in', 'Bhavya');
+  riderA = await addUser(db, '22bme201@nith.ac.in', 'Arjun', { phone: false });
+  riderB = await addUser(db, '22bme202@nith.ac.in', 'Bhavya', { phone: false });
   kailash = await dropPointId(db, 'Kailash Hostel');
   await asOwner(db, `update public.profiles set phone = '+919800000101' where id = $1`, [student]);
 });

@@ -92,6 +92,22 @@ export async function listCategories(client: CampusClient) {
   return data;
 }
 
+/**
+ * Takes items the shop doesn't have off an order before it is packed. The rest is re-priced (fees
+ * never go up), the items are marked out of stock, and the student is told the new amount.
+ */
+export async function removeOrderItems(client: CampusClient, orderId: string, itemIds: string[]) {
+  const { error } = await client.rpc('remove_order_items', { p_order_id: orderId, p_item_ids: itemIds });
+  if (error) throw error;
+}
+
+/** The oldest Android build (versionCode) still allowed; 0 lets every build in. */
+export async function minAndroidVersionCode(client: CampusClient): Promise<number> {
+  const { data, error } = await client.from('app_settings').select('min_android_version_code').maybeSingle();
+  if (error) throw error;
+  return data?.min_android_version_code ?? 0;
+}
+
 /** A photo for each shop and category on Home: the first of its items, by name, that has one. */
 export async function homePhotos(client: CampusClient) {
   const { data, error } = await client

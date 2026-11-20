@@ -24,6 +24,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ShopRiderCash } from '@/components/shop-rider-cash';
+import { OrderItemsEditor } from '@/components/order-items-editor';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -177,7 +178,7 @@ export default function OrdersScreen() {
               )}
 
               {visible.map((order) => (
-                <OrderCard key={order.id} order={order} now={now} onError={setError} />
+                <OrderCard key={order.id} order={order} now={now} onError={setError} onHandled={alarm.handled} />
               ))}
 
               <ShopRiderCash shopId={shop.id} orders={orders} />
@@ -200,7 +201,17 @@ export default function OrdersScreen() {
   );
 }
 
-function OrderCard({ order, now, onError }: { order: Order; now: number; onError: (message: string | null) => void }) {
+function OrderCard({
+  order,
+  now,
+  onError,
+  onHandled,
+}: {
+  order: Order;
+  now: number;
+  onError: (message: string | null) => void;
+  onHandled: (orderId: string) => void;
+}) {
   const theme = useTheme();
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -210,6 +221,8 @@ function OrderCard({ order, now, onError }: { order: Order; now: number; onError
   const acceptLeftSec = Math.max(0, Math.round((ACCEPT_WINDOW_MS - (now - Date.parse(order.released_at ?? order.placed_at))) / 1000));
 
   async function move(to: OrderStatus, extra: { note?: string; code?: string; prepMinutes?: number } = {}) {
+    // Stop the ring now; the list only reloads once the server has the new status.
+    if (to === 'accepted' || to === 'rejected') onHandled(order.id);
     setBusy(true);
     onError(null);
     try {
@@ -256,14 +269,12 @@ function OrderCard({ order, now, onError }: { order: Order; now: number; onError
           Hand over at the hostel reception.
         </ThemedText>
       )}
-      {order.mode === 'delivery' && order.status !== 'placed' && (
+      {order.rider && order.status !== 'placed' && (
         <View style={styles.row}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
-            {order.rider
-              ? `Rider: ${order.rider.name || 'CampusCart rider'}`
-              : 'No rider yet. One may take it, or deliver it yourself.'}
+            Rider: {order.rider.name || 'CampusCart rider'}
           </ThemedText>
-          {order.rider?.phone && (
+          {order.rider.phone && (
             <Pressable onPress={() => Linking.openURL(`tel:${order.rider?.phone}`)}>
               <ThemedText type="linkPrimary">Call rider</ThemedText>
             </Pressable>
@@ -271,11 +282,7 @@ function OrderCard({ order, now, onError }: { order: Order; now: number; onError
         </View>
       )}
 
-      {order.order_items.map((item) => (
-        <ThemedText key={item.id} type="small">
-          {item.qty} × {item.name_snapshot}
-        </ThemedText>
-      ))}
+      <OrderItemsEditor orderId={order.id} status={order.status} items={order.order_items} onError={onError} />
       {order.print_jobs &&
         (order.print_jobs.file_deleted_at ? (
           <ThemedText type="small" themeColor="textSecondary">

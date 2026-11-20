@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: { id: boolean; min_android_version_code: number; updated_at: string }
+        Insert: { id?: boolean; min_android_version_code?: number; updated_at?: string }
+        Update: { id?: boolean; min_android_version_code?: number; updated_at?: string }
+        Relationships: []
+      }
       allowed_logins: {
         Row: {
           created_at: string
@@ -2462,6 +2468,10 @@ export type Database = {
       }
       release_delivery: { Args: { p_order_id: string }; Returns: undefined }
       release_scheduled_orders: { Args: { p_at?: string }; Returns: number }
+      remove_order_items: {
+        Args: { p_item_ids: string[]; p_order_id: string }
+        Returns: Database["public"]["Tables"]["orders"]["Row"]
+      }
       request_account_deletion: { Args: never; Returns: undefined }
       rider_cash_due_paise: { Args: { p_rider_id: string }; Returns: number }
       rider_cash_limit_paise: { Args: never; Returns: number }
@@ -2634,6 +2644,31 @@ export type Database = {
           average: number
           ratings: number
           shop_id: string
+        }[]
+      }
+      shop_month_orders: {
+        Args: { p_month: string; p_shop_id: string }
+        Returns: {
+          code: string
+          completed_at: string
+          item_sales_paise: number
+          mode: Database["public"]["Enums"]["order_mode"]
+          order_id: string
+          pay_method: Database["public"]["Enums"]["pay_method"]
+          platform_fee_paise: number
+          token_no: number
+          total_paise: number
+        }[]
+      }
+      shop_monthly_bills: {
+        Args: { p_month: string }
+        Returns: {
+          delivery_paise: number
+          item_sales_paise: number
+          orders: number
+          platform_fee_paise: number
+          shop_id: string
+          shop_name: string
         }[]
       }
       shop_report: {
