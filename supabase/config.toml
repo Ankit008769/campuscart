@@ -329,12 +329,13 @@ max_frequency = "5s"
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
 # `twitter`, `x`, `slack`, `spotify`, `workos`, `zoom`.
 
-# CampusCart sign-in: Google Cloud project campuscart-512806, web client "CampusCart Supabase".
+# CampusCart sign-in: Google Cloud project "Campus Cart NITH" (sunny-incentive-513716-s6, owned by
+# ronakdotasara05@gmail.com), web client "CampusCart Supabase".
 # The client ID is public. The secret lives only in the Supabase dashboard; for local `supabase start`,
 # put it in supabase/.env (git-ignored) as SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET.
 [auth.external.google]
 enabled = true
-client_id = "356353308771-tr1eijq75g1rmikn30e7e1fs5l9iheoc.apps.googleusercontent.com"
+client_id = "399649860734-nkoifkhbrc5ihv2r177dpbea71oo2l21.apps.googleusercontent.com"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 redirect_uri = ""
 url = ""
