@@ -12,6 +12,15 @@ export type FcmMessage = {
   channelId: string;
 };
 
+/**
+ * A shop's new order (and its reminder) rings like a call on 1.0.5 and later, until ringUntil
+ * (apps/consumer/plugins/order-ringer). Firebase data values must be strings.
+ */
+function ringFields(data: Record<string, unknown>): Record<string, string> {
+  if (data.ring !== true || typeof data.orderId !== 'string') return {};
+  return { ring: '1', orderId: data.orderId, ringUntil: String(data.ringUntil ?? '') };
+}
+
 /** What happened to one message: sent, a token Firebase no longer knows, or another failure. */
 export type FcmResult = 'sent' | 'unregistered' | 'failed';
 
@@ -78,7 +87,7 @@ export async function sendFcm(messages: FcmMessage[]): Promise<FcmResult[] | nul
         message: {
           token: m.token,
           android: { priority: 'HIGH' },
-          data: { title: m.title, message: m.body, channelId: m.channelId, body: JSON.stringify(m.data) },
+          data: { title: m.title, message: m.body, channelId: m.channelId, body: JSON.stringify(m.data), ...ringFields(m.data) },
         },
       }),
     });
