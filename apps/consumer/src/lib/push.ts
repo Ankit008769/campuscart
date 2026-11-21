@@ -31,7 +31,7 @@ async function createChannel(side: Side) {
     });
     return;
   }
-  // Loud on purpose: a new order expires if nobody accepts it within 3 minutes.
+  // Loud on purpose: a new order is dropped if nobody accepts it within 7 minutes.
   await Notifications.setNotificationChannelAsync('new-orders', {
     name: 'New orders for your shop',
     importance: AndroidImportance.MAX,
