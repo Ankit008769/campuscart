@@ -6,7 +6,7 @@ import * as Notifications from 'expo-notifications';
 import { AndroidImportance, AndroidNotificationVisibility } from 'expo-notifications';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import type { Side } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -31,7 +31,9 @@ async function createChannel(side: Side) {
     });
     return;
   }
-  // Loud on purpose: a new order is dropped if nobody accepts it within 7 minutes.
+  // Loud on purpose: a new order is dropped if nobody accepts it within 7 minutes. While the app is
+  // closed, new orders ring on a loop on the native "order-ring" channel instead
+  // (plugins/order-ringer/OrderRingService.kt); this one is for the banner while the app is open.
   await Notifications.setNotificationChannelAsync('new-orders', {
     name: 'New orders for your shop',
     importance: AndroidImportance.MAX,
@@ -114,6 +116,23 @@ export function useOpenTappedOrder(side: Side | null) {
     };
     open(Notifications.getLastNotificationResponse());
     const subscription = Notifications.addNotificationResponseReceivedListener(open);
+    return () => subscription.remove();
+  }, [side]);
+}
+
+/**
+ * Stops a shop phone ringing once someone opens the app: the native ringer
+ * (plugins/order-ringer/OrderRingService.kt) loops until its notification is cleared, and the
+ * orders board shows every waiting order with its own ring.
+ */
+export function useStopRingingOnOpen(side: Side | null) {
+  useEffect(() => {
+    if (!supported() || Platform.OS !== 'android' || side !== 'shop') return;
+    const clear = () => Notifications.dismissAllNotificationsAsync().catch(() => {});
+    clear();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') clear();
+    });
     return () => subscription.remove();
   }, [side]);
 }

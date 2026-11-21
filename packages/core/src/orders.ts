@@ -28,8 +28,9 @@ export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   // A scheduled order waits, unseen by the shop, until its slot time minus prep and walk time.
   scheduled: ['placed', 'cancelled'],
   placed: ['accepted', 'rejected', 'cancelled', 'expired'],
+  // A shop can still call off an order it took (by mistake, or an item ran out) until it leaves the shop.
   accepted: ['ready', 'cancelled'],
-  ready: ['out_for_delivery', 'collected'],
+  ready: ['out_for_delivery', 'collected', 'cancelled'],
   out_for_delivery: ['delivered'],
   delivered: [],
   collected: [],

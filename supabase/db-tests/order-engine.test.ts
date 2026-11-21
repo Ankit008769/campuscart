@@ -274,6 +274,17 @@ test('a shop that has not answered after 2 minutes is reminded once, and the ord
   await asOwner(db, 'select public.expire_stale_orders()');
   const sent = await reminders();
   assert.ok(sent.length >= 1);
+  // The reminder rings like a call on shop phones, until the order would be dropped.
+  const [ring] = await asOwner<{ ring: boolean; until: string; placed: string }>(
+    db,
+    `select (p.data ->> 'ring')::boolean as ring, (p.data ->> 'ringUntil') as until,
+            (extract(epoch from o.placed_at + interval '7 minutes') * 1000)::bigint::text as placed
+     from public.push_outbox p join public.orders o on o.id = (p.data ->> 'orderId')::uuid
+     where p.app = 'merchant' and p.title like '%still waiting' and o.id = $1 limit 1`,
+    [waiting.id],
+  );
+  assert.equal(ring.ring, true);
+  assert.equal(ring.until, ring.placed);
   assert.equal(new Set(sent.map((r) => r.user_id)).size, sent.length, 'one reminder per shop login');
   const [row] = await asOwner<{ status: string }>(db, 'select status from public.orders where id = $1', [waiting.id]);
   assert.equal(row.status, 'placed');
