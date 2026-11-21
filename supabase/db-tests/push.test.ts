@@ -92,6 +92,67 @@ test('a student cancelling tells the shop; a shop rejecting tells the student wh
   assert.equal(last?.body, 'Out of Maggi. Nothing to pay.');
 });
 
+test('a new order rings the shop until it would be dropped; other shop pushes do not ring', async () => {
+  const order = await as(db, student, () =>
+    placeOrder(db, { shopId: SHOP.general, mode: 'pickup', items: [{ variant_id: VARIANT.maggi70g, qty: 1 }] }),
+  );
+  await as(db, student, () => transition(db, order.id, 'cancelled'));
+  const rows = await asOwner<{ title: string; ring: string | null; until: string | null; expected: string }>(
+    db,
+    `select p.title, p.data ->> 'ring' as ring, p.data ->> 'ringUntil' as until,
+            (extract(epoch from o.placed_at + interval '7 minutes') * 1000)::bigint::text as expected
+     from public.push_outbox p join public.orders o on o.id = $1::uuid
+     where p.app = 'merchant' and p.data ->> 'orderId' = $1::text order by p.id`,
+    [order.id],
+  );
+  assert.equal(rows.length, 2);
+  assert.match(rows[0].title, /^New order #/);
+  assert.equal(rows[0].ring, 'true');
+  assert.equal(rows[0].until, rows[0].expected);
+  assert.equal(rows[1].ring, null, 'the cancelled note does not ring');
+});
+
+test('a shop can cancel an order it accepted or packed, and the student is told who and why', async () => {
+  const accepted = await as(db, student, () =>
+    placeOrder(db, { shopId: SHOP.general, mode: 'pickup', items: [{ variant_id: VARIANT.maggi70g, qty: 1 }] }),
+  );
+  const packed = await as(db, student, () =>
+    placeOrder(db, { shopId: SHOP.general, mode: 'delivery', dropPointId: kailash, items: [{ variant_id: VARIANT.maggi70g, qty: 2 }] }),
+  );
+  await as(db, owner, async () => {
+    await transition(db, accepted.id, 'accepted', { prepMinutes: 5 });
+    await assert.rejects(transition(db, accepted.id, 'cancelled'), /Give a reason/);
+    await transition(db, accepted.id, 'cancelled', { note: 'Accepted by mistake' });
+    await transition(db, packed.id, 'accepted', { prepMinutes: 5 });
+    await transition(db, packed.id, 'ready');
+    await transition(db, packed.id, 'cancelled', { note: 'Item out of stock' });
+  });
+  // Students still cannot cancel once the shop has accepted.
+  const third = await as(db, student, () =>
+    placeOrder(db, { shopId: SHOP.general, mode: 'pickup', items: [{ variant_id: VARIANT.maggi70g, qty: 1 }] }),
+  );
+  await as(db, owner, () => transition(db, third.id, 'accepted', { prepMinutes: 5 }));
+  await as(db, student, async () => {
+    await assert.rejects(transition(db, third.id, 'cancelled'), /cannot move from accepted to cancelled/);
+  });
+
+  for (const [order, reason] of [
+    [accepted, 'Accepted by mistake'],
+    [packed, 'Item out of stock'],
+  ] as const) {
+    const last = (await pushesFor(order.id)).at(-1);
+    assert.equal(last?.app, 'consumer');
+    assert.match(last?.title ?? '', / had to cancel your order$/);
+    assert.equal(last?.body, `${reason}. Nothing to pay. Sorry about that.`);
+    const [row] = await asOwner<{ status: string; cancel_reason: string }>(
+      db,
+      'select status, cancel_reason from public.orders where id = $1',
+      [order.id],
+    );
+    assert.deepEqual(row, { status: 'cancelled', cancel_reason: reason });
+  }
+});
+
 test('send-push claims each message once, one row per registered device', async () => {
   const claim = async () => {
     await db.exec('set role service_role');

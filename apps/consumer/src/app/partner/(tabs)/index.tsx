@@ -33,6 +33,8 @@ const TABS: { name: string; statuses: OrderStatus[] }[] = [
 ];
 const PREP_CHOICES = [5, 10, 15];
 const REJECT_REASONS = ['Item out of stock', 'Closing now', 'Too busy right now'];
+// After accepting: the student is told the shop cancelled, with this reason, and pays nothing.
+const CANCEL_REASONS = ['Item out of stock', 'Accepted by mistake', 'Closing now', 'Cannot make it now'];
 const PAY_LABEL = { cash: 'cash', upi_at_handover: 'UPI' } as const;
 
 export default function OrdersScreen() {
@@ -230,7 +232,10 @@ function OrderCard({
   const theme = useTheme();
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [code, setCode] = useState('');
+  // Accepted or packed, and still at the shop: the shop can still call it off.
+  const cancellable = order.status === 'accepted' || order.status === 'ready';
 
   const placedAgoMin = Math.max(0, Math.floor((now - Date.parse(order.released_at ?? order.placed_at)) / 60000));
   const acceptLeftSec = Math.max(0, Math.round((ACCEPT_WINDOW_MS - (now - Date.parse(order.released_at ?? order.placed_at))) / 1000));
@@ -354,8 +359,27 @@ function OrderCard({
           <ActionButton label="Back" tone="quiet" disabled={busy} onPress={() => setRejecting(false)} />
         </View>
       )}
-      {order.status === 'accepted' && <ActionButton label="Mark packed and ready" disabled={busy} onPress={() => move('ready')} />}
-      {order.status === 'ready' && order.mode === 'delivery' && (
+      {cancellable && cancelling && (
+        <View style={styles.cancelBox}>
+          <ThemedText type="smallBold">Why are you cancelling?</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            The student is told right away, with this reason, and pays nothing.
+            {order.status === 'accepted' && order.order_items.length > 1
+              ? ' Only one item ran out? Use "Some items not in stock?" above instead and keep the order.'
+              : ''}
+          </ThemedText>
+          <View style={styles.actions}>
+            {CANCEL_REASONS.map((reason) => (
+              <ActionButton key={reason} label={reason} tone="bad" disabled={busy} onPress={() => move('cancelled', { note: reason })} />
+            ))}
+            <ActionButton label="Keep the order" tone="quiet" disabled={busy} onPress={() => setCancelling(false)} />
+          </View>
+        </View>
+      )}
+      {order.status === 'accepted' && !cancelling && (
+        <ActionButton label="Mark packed and ready" disabled={busy} onPress={() => move('ready')} />
+      )}
+      {order.status === 'ready' && order.mode === 'delivery' && !cancelling && (
         <ActionButton
           label={order.rider ? 'Handed to the rider' : 'Out for delivery'}
           disabled={busy}
@@ -367,7 +391,7 @@ function OrderCard({
           With the rider. They finish it with the student&apos;s code.
         </ThemedText>
       )}
-      {((order.status === 'out_for_delivery' && !order.rider_id) || (order.status === 'ready' && order.mode === 'pickup')) && (
+      {((order.status === 'out_for_delivery' && !order.rider_id) || (order.status === 'ready' && order.mode === 'pickup' && !cancelling)) && (
         <View style={styles.row}>
           <TextInput
             value={code}
@@ -388,6 +412,13 @@ function OrderCard({
             }
           />
         </View>
+      )}
+      {cancellable && !cancelling && (
+        <Pressable accessibilityRole="button" onPress={() => setCancelling(true)} hitSlop={8} style={styles.cancelLink}>
+          <ThemedText type="small" style={styles.cancelText}>
+            Cancel this order
+          </ThemedText>
+        </Pressable>
       )}
     </ThemedView>
   );
@@ -511,6 +542,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  cancelBox: {
+    gap: Spacing.two,
+    borderWidth: 1,
+    borderColor: Brand.red,
+    borderRadius: Radius.small,
+    padding: Spacing.three,
+  },
+  cancelLink: {
+    alignSelf: 'flex-start',
+  },
+  cancelText: {
+    color: Brand.red,
+    fontWeight: 600,
   },
   action: {
     borderWidth: 1,

@@ -94,7 +94,7 @@ export function OrderItemsEditor({
       })}
       <ThemedText type="small" themeColor="textSecondary">
         {everything
-          ? 'To drop every item, reject the order instead.'
+          ? `To drop every item, ${status === 'placed' ? 'reject' : 'cancel'} the order instead.`
           : 'The student keeps the rest at the lower price and is told right away. These items are also marked out of stock.'}
       </ThemedText>
       <View style={styles.buttons}>
