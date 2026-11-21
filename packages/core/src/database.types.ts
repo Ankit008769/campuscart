@@ -1370,6 +1370,8 @@ export type Database = {
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           room_note: string | null
+          terms_accepted_at: string | null
+          terms_version: number
         }
         Insert: {
           blocked?: boolean
@@ -1382,6 +1384,8 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           room_note?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: number
         }
         Update: {
           blocked?: boolean
@@ -1394,6 +1398,8 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           room_note?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: number
         }
         Relationships: [
           {
@@ -1662,6 +1668,38 @@ export type Database = {
         }
         Relationships: []
       }
+      suggestions: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          profile_id: string
+          read_at: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          read_at?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_alerts: {
         Row: {
           created_at: string
@@ -1787,6 +1825,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_terms: {
+        Args: { p_version: number }
+        Returns: undefined
+      }
       apply_as_rider: {
         Args: { p_upi_vpa: string }
         Returns: {
@@ -2637,6 +2679,19 @@ export type Database = {
       settle_rider_cash: {
         Args: { p_rider_id: string; p_shop_id: string }
         Returns: number
+      }
+      list_suggestions: {
+        Args: { p_limit?: number }
+        Returns: {
+          body: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          read_at: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
       }
       shop_ratings: {
         Args: never

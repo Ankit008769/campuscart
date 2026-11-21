@@ -14,6 +14,8 @@ import { useAuth } from '@/lib/auth';
 const ROWS: { icon: IconName; title: string; hint: string; href: Href }[] = [
   { icon: 'edit', title: 'Your profile', hint: 'Name, mobile number and usual hostel', href: '/profile' },
   { icon: 'print', title: 'Print Store', hint: 'Send a PDF, get it printed', href: '/print' },
+  { icon: 'idea', title: 'Suggestions', hint: 'Ideas or problems? Tell the developer', href: '/suggest' },
+  { icon: 'document', title: 'Terms & Conditions', hint: 'How ordering, paying and refunds work', href: '/terms' },
 ];
 
 export default function AccountScreen() {

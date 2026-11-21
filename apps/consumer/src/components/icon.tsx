@@ -26,6 +26,9 @@ const ICONS = {
   group: { ios: 'person.3', android: 'group' },
   bolt: { ios: 'bolt.fill', android: 'bolt' },
   error: { ios: 'exclamationmark.circle', android: 'error' },
+  idea: { ios: 'lightbulb', android: 'lightbulb' },
+  document: { ios: 'doc.text', android: 'description' },
+  phone: { ios: 'phone.fill', android: 'call' },
 } as const satisfies Record<string, { ios: SFSymbol; android: AndroidSymbol }>;
 
 export type IconName = keyof typeof ICONS;

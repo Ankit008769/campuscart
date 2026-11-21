@@ -69,6 +69,12 @@ export default function AdminShopsScreen() {
             Each shop&apos;s orders this month and the ₹4 platform fee to collect.
           </ThemedText>
         </Card>
+        <Card accessibilityLabel="Suggestions" onPress={() => router.push('/admin/suggestions')}>
+          <ThemedText type="smallBold">Suggestions</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Ideas and problems students sent from Account → Suggestions.
+          </ThemedText>
+        </Card>
         {!shops && !error && <ActivityIndicator style={styles.loading} />}
         {shops?.map((shop) => (
           <Card key={shop.id} accessibilityLabel={shop.name} onPress={() => router.push(`/admin/shop/${shop.id}`)}>
