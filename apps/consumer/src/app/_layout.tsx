@@ -64,6 +64,9 @@ function RootNavigator() {
           <Stack.Screen name="search" options={{ headerShown: true, title: 'Search' }} />
           <Stack.Screen name="rider" options={{ headerShown: true, title: 'Deliver for CampusCart' }} />
           <Stack.Screen name="suggest" options={{ headerShown: true, title: 'Suggestions' }} />
+          {/* Students open it from Account; before sign-in it opens as an overlay (TermsAgree), so no
+              screen sits outside the guards for the router to fall back to. */}
+          <Stack.Screen name="terms" options={{ headerShown: true, title: 'Terms & Conditions' }} />
           <Stack.Screen name="print" options={{ headerShown: true, title: 'Print Store' }} />
           <Stack.Screen name="cart-status/[id]" options={{ headerShown: true, title: 'Your orders' }} />
           <Stack.Screen name="group/[id]" options={{ headerShown: true, title: 'Group order' }} />
@@ -82,11 +85,9 @@ function RootNavigator() {
         <Stack.Protected guard={!side}>
           <Stack.Screen name="admin-sign-in" />
         </Stack.Protected>
-        {/* Readable from the sign-in screen and from Account, so it sits outside every guard. */}
-        <Stack.Screen name="terms" options={{ headerShown: true, title: 'Terms & Conditions' }} />
       </Stack>
       <OfflineBanner />
-      <TermsGate userId={side === 'student' || side === 'shop' ? (userId ?? null) : null} />
+      <TermsGate userId={userId ?? null} side={side} />
     </>
   );
 }

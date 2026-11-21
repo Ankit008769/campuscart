@@ -148,7 +148,11 @@ export default function OrderScreen() {
           {order.status === 'accepted' && order.prep_minutes && (
             <Text style={styles.heroSub}>The shop needs about {order.prep_minutes} minutes.</Text>
           )}
-          {ended && order.cancel_reason && <Text style={styles.heroSub}>{order.cancel_reason}</Text>}
+          {order.status === 'expired' ? (
+            <Text style={styles.heroSub}>It wasn&apos;t accepted in time. Nothing to pay. Try again in a bit, or order from another shop.</Text>
+          ) : (
+            ended && order.cancel_reason && <Text style={styles.heroSub}>{order.cancel_reason}</Text>
+          )}
         </View>
 
         {!ended && (

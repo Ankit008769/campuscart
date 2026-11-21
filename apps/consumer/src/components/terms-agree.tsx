@@ -1,8 +1,12 @@
 import { PRIVACY_POLICY_URL } from '@campuscart/core';
 import { Brand } from '@campuscart/ui';
-import { router } from 'expo-router';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TermsBody } from '@/components/terms-body';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 
 /**
@@ -11,8 +15,26 @@ import { Spacing } from '@/constants/theme';
  */
 export function TermsAgree({ agreed, onChange, nudge }: { agreed: boolean; onChange: (agreed: boolean) => void; nudge: boolean }) {
   const warn = nudge && !agreed;
+  const [reading, setReading] = useState(false);
   return (
     <View style={styles.row}>
+      <Modal visible={reading} animationType="slide" onRequestClose={() => setReading(false)}>
+        <ThemedView style={styles.flex}>
+          <SafeAreaView style={styles.flex}>
+            <View style={styles.sheetHeader}>
+              <ThemedText type="section" style={styles.flex}>
+                Terms &amp; Conditions
+              </ThemedText>
+              <Pressable accessibilityRole="button" onPress={() => setReading(false)} hitSlop={8}>
+                <ThemedText type="linkPrimary">Close</ThemedText>
+              </Pressable>
+            </View>
+            <ScrollView contentContainerStyle={styles.sheet}>
+              <TermsBody />
+            </ScrollView>
+          </SafeAreaView>
+        </ThemedView>
+      </Modal>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: agreed }}
@@ -24,7 +46,7 @@ export function TermsAgree({ agreed, onChange, nudge }: { agreed: boolean; onCha
       </Pressable>
       <Text style={[styles.text, warn && styles.textWarn]} onPress={() => onChange(!agreed)}>
         I agree to the{' '}
-        <Text style={styles.link} accessibilityRole="link" onPress={() => router.push('/terms')}>
+        <Text style={styles.link} accessibilityRole="link" onPress={() => setReading(true)}>
           Terms &amp; Conditions
         </Text>{' '}
         and{' '}
@@ -38,6 +60,19 @@ export function TermsAgree({ agreed, onChange, nudge }: { agreed: boolean; onCha
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.three,
+  },
+  sheet: {
+    padding: Spacing.three,
+    paddingTop: 0,
+    paddingBottom: Spacing.six,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

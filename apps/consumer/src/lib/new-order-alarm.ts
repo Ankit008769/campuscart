@@ -16,7 +16,7 @@ export function useNewOrderAlarm(waitingOrderIds: readonly string[]) {
   const ringing = waitingOrderIds.some((id) => !seen.has(id));
 
   useEffect(() => {
-    // Ring even with the phone on silent: an order nobody accepts expires in 3 minutes.
+    // Ring even with the phone on silent: an order nobody accepts is dropped after 7 minutes.
     setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'doNotMix' }).catch(() => {});
   }, []);
 
