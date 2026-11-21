@@ -134,7 +134,7 @@ test('students cancel a scheduled order without the shop hearing of it; released
   ]);
   await asOwner(db, 'select public.expire_stale_orders()');
   assert.equal((await asOwner<{ status: string }>(db, 'select status from public.orders where id = $1', [later.id]))[0].status, 'placed');
-  await asOwner(db, `update public.orders set released_at = now() - interval '4 minutes' where id = $1`, [later.id]);
+  await asOwner(db, `update public.orders set released_at = now() - interval '8 minutes' where id = $1`, [later.id]);
   await asOwner(db, 'select public.expire_stale_orders()');
   assert.equal((await asOwner<{ status: string }>(db, 'select status from public.orders where id = $1', [later.id]))[0].status, 'expired');
 });

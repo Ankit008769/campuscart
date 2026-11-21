@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
+import { RiderCash } from "./rider-cash";
+
 type Rider = Awaited<ReturnType<typeof listRiders>>[number];
 type Payout = Awaited<ReturnType<typeof listRiderPayouts>>[number];
 
@@ -148,6 +150,8 @@ export default function RidersPage() {
           </div>
         )}
       </section>
+
+      <RiderCash />
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">

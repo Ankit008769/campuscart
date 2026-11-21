@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   errorTitle: {
     color: Brand.ink,
     fontSize: 20,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   errorText: {
     color: Brand.inkSoft,
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   retryText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 15,
   },
 });

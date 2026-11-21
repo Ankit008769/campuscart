@@ -1,5 +1,6 @@
 import {
   DEFAULT_FEE_RULES,
+  deliveryCharge,
   deliverySurcharge,
   formatPaise,
   getFeeRules,
@@ -20,6 +21,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CouponBox, type AppliedCoupon } from '@/components/coupon-box';
+import { DropPointPicker } from '@/components/drop-point-picker';
 import { QtyStepper } from '@/components/qty-stepper';
 import { SmartPicks } from '@/components/smart-picks';
 import { ThemedText } from '@/components/themed-text';
@@ -29,6 +31,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
 import { supabase } from '@/lib/supabase';
+import { PhoneRequired } from '@/components/phone-required';
+import { useNeedsPhone } from '@/hooks/use-needs-phone';
 
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
 
@@ -46,6 +50,7 @@ export function MultiShopCheckout() {
 
   const [mode, setMode] = useState<OrderMode>('delivery');
   const [dropPointId, setDropPointId] = useState<string | null>(null);
+  const [usualDropPointId, setUsualDropPointId] = useState<string | null>(null);
   const [roomNote, setRoomNote] = useState('');
   const [payMethod, setPayMethod] = useState<PayMethod>('upi_at_handover');
   const [rules, setRules] = useState<FeeRules>(DEFAULT_FEE_RULES);
@@ -63,6 +68,7 @@ export function MultiShopCheckout() {
         if (!active) return;
         setRules(fees);
         setDropPoints(points);
+        setUsualDropPointId(profile.default_drop_point_id);
         if (points.some((p) => p.id === profile.default_drop_point_id)) setDropPointId(profile.default_drop_point_id);
         if (profile.room_note) setRoomNote(profile.room_note);
       },
@@ -97,7 +103,8 @@ export function MultiShopCheckout() {
   });
   const discount = Math.min(coupon?.discountPaise ?? 0, primary?.subtotalPaise ?? 0);
   const toPay = preview ? preview.bill.totalPaise + surcharge - discount : 0;
-  const canPlace = !!preview && preview.problems.length === 0 && preview.shops.length > 0 && !placing && (mode === 'pickup' || !!dropPointId);
+  const needsPhone = useNeedsPhone();
+  const canPlace = !needsPhone && !!preview && preview.problems.length === 0 && preview.shops.length > 0 && !placing && (mode === 'pickup' || !!dropPointId);
 
   async function onPlace() {
     setPlacing(true);
@@ -196,13 +203,7 @@ export function MultiShopCheckout() {
         )}
         {mode === 'delivery' && (
           <>
-            <View style={styles.chips}>
-              {dropPoints.map((p) => (
-                <Pressable key={p.id} onPress={() => setDropPointId(p.id)} style={[styles.chip, dropPointId === p.id && styles.chipActive]}>
-                  <Text style={[styles.chipText, { color: dropPointId === p.id ? '#ffffff' : theme.text }]}>{p.name}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <DropPointPicker points={dropPoints} value={dropPointId} onChange={setDropPointId} usualId={usualDropPointId} />
             <TextInput
               value={roomNote}
               onChangeText={setRoomNote}
@@ -230,8 +231,7 @@ export function MultiShopCheckout() {
         {preview && (
           <ThemedView type="backgroundElement" style={styles.card}>
             <BillRow label="Item total" paise={preview.bill.subtotalPaise} />
-            {preview.bill.deliveryFeePaise > 0 && <BillRow label="Delivery fee (once for the cart)" paise={preview.bill.deliveryFeePaise} />}
-            {preview.bill.smallCartFeePaise > 0 && <BillRow label="Small cart fee" paise={preview.bill.smallCartFeePaise} />}
+            {deliveryCharge(preview.bill) > 0 && <BillRow label="Delivery (once for the cart)" paise={deliveryCharge(preview.bill)} />}
             <BillRow label="Platform fee" paise={preview.bill.platformFeePaise} />
             {surcharge > 0 && <BillRow label="Distance and night charge" paise={surcharge} />}
             {discount > 0 && <BillRow label={`Coupon ${coupon?.code}`} paise={-discount} />}
@@ -248,6 +248,7 @@ export function MultiShopCheckout() {
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
+        {needsPhone && <PhoneRequired />}
         <Pressable accessibilityRole="button" disabled={!canPlace} onPress={onPlace} style={[styles.placeButton, !canPlace && styles.disabled]}>
           {placing ? (
             <ActivityIndicator color="#ffffff" />
@@ -315,30 +316,11 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
   segmentTextActive: {
     color: '#ffffff',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: Brand.green,
-    borderRadius: 999,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + Spacing.half,
-  },
-  chipActive: {
-    backgroundColor: Brand.green,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: 600,
   },
   input: {
     borderWidth: 1,
@@ -349,7 +331,7 @@ const styles = StyleSheet.create({
   },
   remove: {
     color: Brand.red,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   error: {
     color: Brand.red,
@@ -373,7 +355,7 @@ const styles = StyleSheet.create({
   },
   placeText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   disabled: {

@@ -1,6 +1,7 @@
 import {
   PRINT_FILE_MAX_BYTES,
   calculateBill,
+  deliveryCharge,
   formatPaise,
   getFeeRules,
   listDropPoints,
@@ -19,6 +20,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
+import { DropPointPicker } from '@/components/drop-point-picker';
 import { QtyStepper } from '@/components/qty-stepper';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -26,6 +28,8 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { PhoneRequired } from '@/components/phone-required';
+import { useNeedsPhone } from '@/hooks/use-needs-phone';
 
 type PrintShop = Awaited<ReturnType<typeof listPrintShops>>[number];
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
@@ -50,6 +54,7 @@ export default function PrintScreen() {
   const [priced, setPriced] = useState<Priced | null>(null);
   const [mode, setMode] = useState<OrderMode>('pickup');
   const [dropPointId, setDropPointId] = useState<string | null>(null);
+  const needsPhone = useNeedsPhone();
   const [payMethod, setPayMethod] = useState<PayMethod>('upi_at_handover');
   const [busy, setBusy] = useState<'pick' | 'price' | 'place' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -149,7 +154,7 @@ export default function PrintScreen() {
   }
 
   const bill = priced && fees ? calculateBill(priced.pricePaise, mode, fees) : null;
-  const canPlace = !!priced && busy === null && (mode === 'pickup' || !!dropPointId) && !!shop?.shops?.is_open;
+  const canPlace = !needsPhone && !!priced && busy === null && (mode === 'pickup' || !!dropPointId) && !!shop?.shops?.is_open;
 
   return (
     <ThemedView style={styles.container}>
@@ -250,16 +255,7 @@ export default function PrintScreen() {
               })}
             </View>
             {mode === 'delivery' && (
-              <View style={styles.chips}>
-                {dropPoints.map((point) => (
-                  <Pressable
-                    key={point.id}
-                    onPress={() => setDropPointId(point.id)}
-                    style={[styles.chip, dropPointId === point.id && styles.chipActive]}>
-                    <Text style={[styles.chipText, { color: dropPointId === point.id ? '#ffffff' : theme.text }]}>{point.name}</Text>
-                  </Pressable>
-                ))}
-              </View>
+              <DropPointPicker points={dropPoints} value={dropPointId} onChange={setDropPointId} />
             )}
 
             <ThemedText type="smallBold">How will you pay?</ThemedText>
@@ -278,12 +274,12 @@ export default function PrintScreen() {
                 label={`${priced.pages} ${priced.pages === 1 ? 'page' : 'pages'}${copies > 1 ? ` × ${copies}` : ''}, ${color ? 'colour' : 'black and white'}`}
                 paise={bill.subtotalPaise}
               />
-              {bill.deliveryFeePaise > 0 && <BillRow label="Delivery fee" paise={bill.deliveryFeePaise} />}
-              {bill.smallCartFeePaise > 0 && <BillRow label="Small cart fee" paise={bill.smallCartFeePaise} />}
+              {deliveryCharge(bill) > 0 && <BillRow label="Delivery" paise={deliveryCharge(bill)} />}
               <BillRow label="Platform fee" paise={bill.platformFeePaise} />
               <BillRow label="To pay" paise={bill.totalPaise} bold />
             </ThemedView>
 
+            {needsPhone && <PhoneRequired />}
             <Pressable
               accessibilityRole="button"
               disabled={!canPlace}
@@ -366,7 +362,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
   },
   segments: {
     flexDirection: 'row',
@@ -385,7 +381,7 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
   segmentTextActive: {
@@ -401,7 +397,7 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
   },
   primary: {
     backgroundColor: Brand.green,
@@ -411,7 +407,7 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 15,
   },
   disabled: {

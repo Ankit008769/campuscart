@@ -21,8 +21,8 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export type OrderMode = 'delivery' | 'pickup';
 export type OrderActor = 'student' | 'shop' | 'rider' | 'admin' | 'system';
 
-/** A shop must accept within this window, or the order expires and is refunded. */
-export const ACCEPT_WINDOW_MS = 3 * 60 * 1000;
+/** A shop must accept within this window, or the order is dropped (nothing to pay). The server reminds the shop at 2 minutes. */
+export const ACCEPT_WINDOW_MS = 7 * 60 * 1000;
 
 export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   // A scheduled order waits, unseen by the shop, until its slot time minus prep and walk time.
@@ -58,7 +58,7 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   collected: 'Collected',
   rejected: 'Rejected by shop',
   cancelled: 'Cancelled',
-  expired: 'Not accepted in time',
+  expired: 'The shop was too busy',
 };
 
 export function isFinal(status: OrderStatus): boolean {

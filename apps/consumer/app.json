@@ -2,23 +2,26 @@
   "expo": {
     "name": "CampusCart",
     "slug": "campuscart",
-    "version": "1.0.0",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "campuscart",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "package": "com.campuscart.student",
+      "versionCode": 5,
+      "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
       "adaptiveIcon": {
         "backgroundColor": "#FFD23F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "server",
@@ -26,12 +29,22 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/with-upload-signing",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "CampusCart uses the camera so shops can take photos of their menu items.",
+          "photosPermission": "CampusCart opens your photos so shops can pick pictures of their menu items.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-notifications",
         {
           "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#1A9E4B",
-          "defaultChannel": "orders"
+          "defaultChannel": "orders",
+          "sounds": ["./assets/sounds/new_order.wav"]
         }
       ],
       [
@@ -39,7 +52,7 @@
         {
           "backgroundColor": "#FFD23F",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 160
         }
       ],
       "@maplibre/maplibre-react-native",
@@ -50,6 +63,23 @@
           "isAndroidBackgroundLocationEnabled": false,
           "isIosBackgroundLocationEnabled": false,
           "isAndroidForegroundServiceEnabled": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "CampusCart uses the camera so shops can take photos of menu items and read barcodes when they restock.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
         }
       ]
     ],

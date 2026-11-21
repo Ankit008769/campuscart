@@ -2,9 +2,16 @@ import type { CampusClient } from './api';
 
 export type AuthRedirect = { code: string } | { error: string };
 
+// Anyone can send a campuscart:// link, so a refusal's text is shown only when it is one the database
+// itself writes (the sign-up hook in 20261026100100_auth.sql); any other text becomes a fixed line.
+// Otherwise a crafted link would put the sender's words ("account suspended, pay ₹99 to…") on the
+// app's own sign-in screen.
+const KNOWN_REFUSALS = new Set(['Sign in with your @nith.ac.in college account.']);
+export const SIGN_IN_FAILED = 'Sign-in did not finish. Please try again.';
+
 /**
  * Reads what Supabase appended to the app's return link after Google sign-in: a PKCE code on
- * success, or an error description (for example when the sign-up hook refuses a non-college email).
+ * success, or why it was refused (for example when the sign-up hook refuses a non-college email).
  */
 export function parseAuthRedirect(url: string): AuthRedirect | null {
   const [beforeFragment, fragment = ''] = url.split('#');
@@ -12,7 +19,7 @@ export function parseAuthRedirect(url: string): AuthRedirect | null {
   const params = new URLSearchParams([query, fragment].filter(Boolean).join('&'));
 
   const error = params.get('error_description') ?? params.get('error');
-  if (error) return { error };
+  if (error) return { error: KNOWN_REFUSALS.has(error) ? error : SIGN_IN_FAILED };
   const code = params.get('code');
   return code ? { code } : null;
 }

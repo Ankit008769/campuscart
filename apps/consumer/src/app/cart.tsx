@@ -1,6 +1,7 @@
 import {
   DEFAULT_FEE_RULES,
   calculateBill,
+  deliveryCharge,
   deliverySurcharge,
   isNightDelivery,
   formatPaise,
@@ -19,6 +20,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CouponBox, type AppliedCoupon } from '@/components/coupon-box';
+import { DropPointPicker } from '@/components/drop-point-picker';
 import { MultiShopCheckout } from '@/components/multi-shop-checkout';
 import { QtyStepper } from '@/components/qty-stepper';
 import { SmartPicks } from '@/components/smart-picks';
@@ -32,6 +34,7 @@ import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
 import { logStep } from '@/lib/events';
 import { supabase } from '@/lib/supabase';
+import { PhoneRequired } from '@/components/phone-required';
 
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
 
@@ -50,6 +53,7 @@ export default function CartScreen() {
 
   const [mode, setMode] = useState<OrderMode>(shop?.doesDelivery === false ? 'pickup' : 'delivery');
   const [dropPointId, setDropPointId] = useState<string | null>(null);
+  const [usualDropPointId, setUsualDropPointId] = useState<string | null>(null);
   const [roomNote, setRoomNote] = useState('');
   const [payMethod, setPayMethod] = useState<PayMethod>('upi_at_handover');
   const [feeRules, setFeeRules] = useState<FeeRules | null>(null);
@@ -74,6 +78,7 @@ export default function CartScreen() {
         setFeeRules(fees);
         setDropPoints(points);
         // Start from the student's usual hostel and room; they can still change both for this order.
+        setUsualDropPointId(profile.default_drop_point_id);
         if (points.some((p) => p.id === profile.default_drop_point_id)) setDropPointId(profile.default_drop_point_id);
         if (profile.room_note) setRoomNote(profile.room_note);
       },
@@ -111,8 +116,8 @@ export default function CartScreen() {
   });
   const night = mode === 'delivery' && isNightDelivery(deliverAt) && (rules.nightSurchargePaise ?? 0) > 0;
   const toPay = bill.totalPaise - discount + surcharge;
-  const shortOfFreeSmallCart = rules.smallCartLimitPaise - cart.subtotalPaise;
-  const canPlace = !placing && (mode === 'pickup' || !!dropPointId) && (!mustSchedule || !!slot);
+  const shortOfFreeDelivery = rules.smallCartLimitPaise - cart.subtotalPaise;
+  const canPlace = !needsPhone && !placing && (mode === 'pickup' || !!dropPointId) && (!mustSchedule || !!slot);
 
   async function onPlaceOrder() {
     if (!shop) return;
@@ -185,22 +190,8 @@ export default function CartScreen() {
           <>
             <ThemedText type="smallBold">Where should it come?</ThemedText>
             {!dropPoints && !error && <ActivityIndicator />}
-            <View style={styles.chips}>
-              {dropPoints?.map((point) => (
-                <Pressable
-                  key={point.id}
-                  onPress={() => setDropPointId(point.id)}
-                  style={[styles.chip, dropPointId === point.id && styles.chipActive]}>
-                  <Text style={[styles.chipText, { color: dropPointId === point.id ? '#ffffff' : theme.text }]}>
-                    {point.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            {chosenPoint?.gate_only && (
-              <ThemedText type="small" themeColor="textSecondary">
-                Orders for {chosenPoint.name} are handed over at the reception.
-              </ThemedText>
+            {dropPoints && (
+              <DropPointPicker points={dropPoints} value={dropPointId} onChange={setDropPointId} usualId={usualDropPointId} />
             )}
             <TextInput
               value={roomNote}
@@ -211,15 +202,6 @@ export default function CartScreen() {
               maxLength={60}
             />
           </>
-        )}
-
-        {needsPhone && (
-          <Pressable accessibilityRole="button" onPress={() => router.push('/profile')}>
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="small">Add your mobile number so the shop can call you if something is out of stock.</ThemedText>
-              <ThemedText type="linkPrimary">Add number</ThemedText>
-            </ThemedView>
-          </Pressable>
         )}
 
         <TimePicker
@@ -249,16 +231,15 @@ export default function CartScreen() {
 
         <ThemedView type="backgroundElement" style={styles.card}>
           <BillRow label="Item total" paise={bill.subtotalPaise} />
-          {mode === 'delivery' && <BillRow label="Delivery fee" paise={bill.deliveryFeePaise} />}
-          {bill.smallCartFeePaise > 0 && <BillRow label="Small cart fee" paise={bill.smallCartFeePaise} />}
+          {mode === 'delivery' && <BillRow label="Delivery" paise={deliveryCharge(bill)} />}
           <BillRow label="Platform fee" paise={bill.platformFeePaise} />
           {surcharge > 0 && <BillRow label={night ? 'Night and distance charge' : 'Distance charge'} paise={surcharge} />}
           {discount > 0 && <BillRow label={`Coupon ${coupon?.code}`} paise={-discount} />}
           <View style={styles.divider} />
           <BillRow label="To pay" paise={toPay} bold />
-          {bill.smallCartFeePaise > 0 && shortOfFreeSmallCart > 0 && (
+          {bill.smallCartFeePaise > 0 && shortOfFreeDelivery > 0 && (
             <ThemedText type="small" themeColor="textSecondary">
-              Add {formatPaise(shortOfFreeSmallCart)} more to skip the small cart fee.
+              Add {formatPaise(shortOfFreeDelivery)} more for free delivery.
             </ThemedText>
           )}
         </ThemedView>
@@ -267,6 +248,7 @@ export default function CartScreen() {
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
+        {needsPhone && <PhoneRequired />}
         <Pressable
           accessibilityRole="button"
           disabled={!canPlace}
@@ -345,30 +327,11 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: Brand.green,
-    fontWeight: 700,
+    fontWeight: 600,
     fontSize: 14,
   },
   segmentTextActive: {
     color: '#ffffff',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: Brand.green,
-    borderRadius: 999,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + Spacing.half,
-  },
-  chipActive: {
-    backgroundColor: Brand.green,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: 600,
   },
   input: {
     borderWidth: 1,
@@ -403,7 +366,7 @@ const styles = StyleSheet.create({
   },
   placeText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   disabled: {
