@@ -286,7 +286,7 @@ export async function getFeeRules(client: CampusClient): Promise<FeeRules> {
 // Kept as one literal so supabase-js can infer the row type. Orders point at profiles twice
 // (student and rider), so each embed names its foreign key.
 export const ORDER_DETAIL =
-  'id, code, status, mode, pay_method, subtotal_paise, delivery_fee_paise, small_cart_fee_paise, platform_fee_paise, surcharge_paise, discount_paise, coupon_code, total_paise, token_no, prep_minutes, room_note, cancel_reason, scheduled_for, release_at, released_at, placed_at, accepted_at, ready_at, out_at, completed_at, cancelled_at, shops (id, name, upi_vpa), drop_points (name, gate_only, lat, lng), order_items (id, name_snapshot, price_paise_snapshot, qty), rider_id, profiles!orders_student_id_fkey (name, phone), rider:profiles!orders_rider_id_fkey (name, phone), print_jobs (file_path, file_name, pages, copies, color, double_sided, file_deleted_at)' as const;
+  'id, code, status, mode, pay_method, subtotal_paise, delivery_fee_paise, small_cart_fee_paise, platform_fee_paise, surcharge_paise, discount_paise, coupon_code, total_paise, token_no, prep_minutes, room_note, cancel_reason, scheduled_for, release_at, released_at, placed_at, accepted_at, ready_at, out_at, completed_at, cancelled_at, shops (id, name, upi_vpa, phone), drop_points (name, gate_only, lat, lng), order_items (id, name_snapshot, price_paise_snapshot, qty), rider_id, profiles!orders_student_id_fkey (name, phone), rider:profiles!orders_rider_id_fkey (name, phone), print_jobs (file_path, file_name, pages, copies, color, double_sided, file_deleted_at)' as const;
 
 /**
  * One order with its items, shop, drop point and customer. The delivery code comes back only for

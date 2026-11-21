@@ -19,4 +19,5 @@ export * from './print';
 export * from './riders';
 export * from './schedule';
 export * from './shop-tools';
+export * from './terms';
 export * from './tracking';

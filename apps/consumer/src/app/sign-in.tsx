@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TermsAgree } from '@/components/terms-agree';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
+import { rememberTermsTicked } from '@/lib/terms';
 
 // The first screen of the app. Students continue with Google; shops and admins sign in with an ID.
 export default function SignInScreen() {
@@ -13,11 +15,25 @@ export default function SignInScreen() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [localError, setError] = useState<string | null>(null);
+  // Students and shops tick the terms before signing in; the tick is recorded once the account opens.
+  const [agreed, setAgreed] = useState(false);
+  const [nudge, setNudge] = useState(false);
   const error = localError ?? authError;
   // Signed in, and the app is reading which side this account belongs to.
   const opening = !!session;
 
+  /** True when the terms are ticked; otherwise points at the tick box instead of going on. */
+  function ready(): boolean {
+    if (!agreed) {
+      setNudge(true);
+      return false;
+    }
+    rememberTermsTicked();
+    return true;
+  }
+
   async function onGoogle(anyAccount: boolean) {
+    if (!ready()) return;
     setBusy(true);
     setError(null);
     try {
@@ -45,6 +61,7 @@ export default function SignInScreen() {
         ) : (
           <View style={styles.actions}>
             <Text style={styles.question}>How do you use CampusCart?</Text>
+            <TermsAgree agreed={agreed} onChange={setAgreed} nudge={nudge} />
             <Pressable
               accessibilityRole="button"
               accessibilityHint="Order from campus shops. Use your @nith.ac.in Google account."
@@ -60,7 +77,7 @@ export default function SignInScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityHint="Take orders for your shop. Use the ID and password from the CampusCart team."
-              onPress={() => router.push('/shop-sign-in')}
+              onPress={() => ready() && router.push('/shop-sign-in')}
               disabled={busy}
               style={({ pressed }) => [styles.choice, styles.choiceShop, pressed && styles.choicePressed]}>
               <View style={styles.choiceText}>

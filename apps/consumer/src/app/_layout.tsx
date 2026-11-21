@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from '@/lib/auth';
 import { CartProvider } from '@/lib/cart';
 import { logStep } from '@/lib/events';
 import { registerForOrderPushes, useOpenTappedOrder } from '@/lib/push';
+import { TermsGate } from '@/lib/terms';
 import { UpdateRequired, useUpdateRequired } from '@/lib/update-gate';
 
 // A crash in any screen shows AppError with a Try again button instead of a blank page.
@@ -62,6 +63,7 @@ function RootNavigator() {
           <Stack.Screen name="profile" options={{ headerShown: true, title: 'Your profile' }} />
           <Stack.Screen name="search" options={{ headerShown: true, title: 'Search' }} />
           <Stack.Screen name="rider" options={{ headerShown: true, title: 'Deliver for CampusCart' }} />
+          <Stack.Screen name="suggest" options={{ headerShown: true, title: 'Suggestions' }} />
           <Stack.Screen name="print" options={{ headerShown: true, title: 'Print Store' }} />
           <Stack.Screen name="cart-status/[id]" options={{ headerShown: true, title: 'Your orders' }} />
           <Stack.Screen name="group/[id]" options={{ headerShown: true, title: 'Group order' }} />
@@ -80,8 +82,11 @@ function RootNavigator() {
         <Stack.Protected guard={!side}>
           <Stack.Screen name="admin-sign-in" />
         </Stack.Protected>
+        {/* Readable from the sign-in screen and from Account, so it sits outside every guard. */}
+        <Stack.Screen name="terms" options={{ headerShown: true, title: 'Terms & Conditions' }} />
       </Stack>
       <OfflineBanner />
+      <TermsGate userId={side === 'student' || side === 'shop' ? (userId ?? null) : null} />
     </>
   );
 }
