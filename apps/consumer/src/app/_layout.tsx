@@ -7,7 +7,7 @@ import { AppError, OfflineBanner } from '@/components/app-status';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { CartProvider } from '@/lib/cart';
 import { logStep } from '@/lib/events';
-import { registerForOrderPushes, useOpenTappedOrder } from '@/lib/push';
+import { registerForOrderPushes, useOpenTappedOrder, useStopRingingOnOpen } from '@/lib/push';
 import { TermsGate } from '@/lib/terms';
 import { UpdateRequired, useUpdateRequired } from '@/lib/update-gate';
 
@@ -45,6 +45,7 @@ function RootNavigator() {
     registerForOrderPushes(side).catch((e: unknown) => console.warn('Could not turn on order notifications', e));
   }, [userId, side]);
   useOpenTappedOrder(side === 'admin' ? null : side);
+  useStopRingingOnOpen(side);
 
   // Admins can require a newer build (app_settings); nothing else opens until it is installed.
   if (updateRequired) return <UpdateRequired />;

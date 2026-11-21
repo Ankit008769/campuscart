@@ -22,6 +22,13 @@ test('students cancel only before the shop accepts', () => {
   assert.ok(canTransition({ from: 'accepted', to: 'cancelled', mode: 'delivery', actor: 'shop' }));
 });
 
+test('a shop can call off an order it took until it leaves the shop', () => {
+  assert.ok(canTransition({ from: 'ready', to: 'cancelled', mode: 'pickup', actor: 'shop' }));
+  assert.ok(canTransition({ from: 'ready', to: 'cancelled', mode: 'delivery', actor: 'shop' }));
+  assert.ok(!canTransition({ from: 'ready', to: 'cancelled', mode: 'pickup', actor: 'student' }));
+  assert.ok(!canTransition({ from: 'out_for_delivery', to: 'cancelled', mode: 'delivery', actor: 'shop' }));
+});
+
 test('admins may cancel any open order but not a finished one', () => {
   assert.ok(canTransition({ from: 'ready', to: 'cancelled', mode: 'pickup', actor: 'admin' }));
   assert.ok(!canTransition({ from: 'delivered', to: 'cancelled', mode: 'delivery', actor: 'admin' }));
