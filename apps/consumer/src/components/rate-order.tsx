@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   saveText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
   },
   disabled: {
     opacity: 0.45,

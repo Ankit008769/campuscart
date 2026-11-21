@@ -37,18 +37,6 @@ export async function listShopStaff(client: CampusClient, shopId: string) {
   return data;
 }
 
-/** Adds a counter worker by Gmail. Returns 'added' if they already had an account, else 'invited'. */
-export async function inviteShopStaff(client: CampusClient, shopId: string, email: string): Promise<string> {
-  const { data, error } = await client.rpc('invite_shop_staff', { p_shop_id: shopId, p_email: email });
-  if (error) throw error;
-  return data;
-}
-
-export async function removeShopStaff(client: CampusClient, shopId: string, profileId: string) {
-  const { error } = await client.rpc('remove_shop_staff', { p_shop_id: shopId, p_profile_id: profileId });
-  if (error) throw error;
-}
-
 export type ReportPeriod = { key: string; label: string; from: Date; to: Date };
 
 /** This and last week (Monday to Sunday) and this and last month, in Indian time. */

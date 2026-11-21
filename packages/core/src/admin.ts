@@ -44,16 +44,17 @@ export async function listOrdersSince(client: CampusClient, since: string) {
 export async function listShopsForAdmin(client: CampusClient) {
   const { data, error } = await client
     .from('shops')
-    .select('id, name, kind, phone, is_open, hours, prep_minutes, commission_bps, does_delivery, does_pickup')
+    .select('id, name, kind, phone, upi_vpa, is_open, hours, prep_minutes, commission_bps, does_delivery, does_pickup')
     .order('name');
   if (error) throw error;
   return data;
 }
 
+/** upi_vpa is where students pay by UPI; only admins can change it, never shop staff. */
 export type ShopUpdate = Partial<
   Pick<
     Database['public']['Tables']['shops']['Update'],
-    'name' | 'kind' | 'is_open' | 'hours' | 'prep_minutes' | 'commission_bps' | 'does_delivery' | 'does_pickup' | 'phone'
+    'name' | 'kind' | 'is_open' | 'hours' | 'prep_minutes' | 'commission_bps' | 'does_delivery' | 'does_pickup' | 'phone' | 'upi_vpa'
   >
 >;
 
@@ -62,7 +63,7 @@ export async function updateShop(client: CampusClient, shopId: string, update: S
   if (error) throw error;
 }
 
-/** Adds a shop, closed until its staff open it. Approve its owner's Gmail on the People page. */
+/** Adds a shop, closed until its staff open it. Give its owner an ID on the admin side of the app. */
 export async function createShop(
   client: CampusClient,
   shop: { name: string; kind: string; phone: string | null; prepMinutes: number },
@@ -74,6 +75,39 @@ export async function createShop(
     .single();
   if (error) throw error;
   return data.id;
+}
+
+/** Month as 'YYYY-MM-01'. Each shop's completed orders that month and the platform fee it owes. */
+export async function shopMonthlyBills(client: CampusClient, month: string) {
+  const { data, error } = await client.rpc('shop_monthly_bills', { p_month: month });
+  if (error) throw error;
+  return data;
+}
+
+/** The completed orders behind one shop's bill for a month ('YYYY-MM-01'), oldest first. */
+export async function shopMonthOrders(client: CampusClient, shopId: string, month: string) {
+  const { data, error } = await client.rpc('shop_month_orders', { p_shop_id: shopId, p_month: month });
+  if (error) throw error;
+  return data;
+}
+
+/** The first day ('YYYY-MM-01') of this month and the months before it, in Indian time, newest first. */
+export function recentMonths(count: number, now = new Date()): { value: string; label: string }[] {
+  const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth() - i, 1));
+    return {
+      value: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+    };
+  });
+}
+
+/** Lets every app build in (0), or makes phones below this Android versionCode update first. */
+export async function setMinAndroidVersionCode(client: CampusClient, versionCode: number) {
+  if (!Number.isInteger(versionCode) || versionCode < 0) throw new Error('Use a whole build number, 0 or more.');
+  const { error } = await client.from('app_settings').update({ min_android_version_code: versionCode, updated_at: new Date().toISOString() }).eq('id', true);
+  if (error) throw error;
 }
 
 /** Fee settings as stored (key, paise), for editing. */
@@ -89,7 +123,7 @@ export async function setFeeRule(client: CampusClient, key: string, valuePaise: 
   if (error) throw error;
 }
 
-/** Non-student sign-ins admins have approved (shop owners and staff, riders, admins). */
+/** Google sign-ins admins have approved that aren't college accounts (riders, admins, reviewers). */
 export async function listAllowedLogins(client: CampusClient) {
   const { data, error } = await client
     .from('allowed_logins')

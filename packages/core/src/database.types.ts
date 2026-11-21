@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: { id: boolean; min_android_version_code: number; updated_at: string }
+        Insert: { id?: boolean; min_android_version_code?: number; updated_at?: string }
+        Update: { id?: boolean; min_android_version_code?: number; updated_at?: string }
+        Relationships: []
+      }
       allowed_logins: {
         Row: {
           created_at: string
@@ -618,6 +624,7 @@ export type Database = {
       }
       group_members: {
         Row: {
+          display_name: string | null
           group_order_id: string
           items: Json
           joined_at: string
@@ -626,6 +633,7 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          display_name?: string | null
           group_order_id: string
           items?: Json
           joined_at?: string
@@ -634,6 +642,7 @@ export type Database = {
           student_id: string
         }
         Update: {
+          display_name?: string | null
           group_order_id?: string
           items?: Json
           joined_at?: string
@@ -1036,6 +1045,8 @@ export type Database = {
           release_at: string | null
           released_at: string | null
           rider_assigned_at: string | null
+          rider_cash_settled_at: string | null
+          rider_cash_settled_by: string | null
           rider_id: string | null
           rider_payout_id: string | null
           rider_payout_paise: number
@@ -1072,6 +1083,8 @@ export type Database = {
           release_at?: string | null
           released_at?: string | null
           rider_assigned_at?: string | null
+          rider_cash_settled_at?: string | null
+          rider_cash_settled_by?: string | null
           rider_id?: string | null
           rider_payout_id?: string | null
           rider_payout_paise?: number
@@ -1108,6 +1121,8 @@ export type Database = {
           release_at?: string | null
           released_at?: string | null
           rider_assigned_at?: string | null
+          rider_cash_settled_at?: string | null
+          rider_cash_settled_by?: string | null
           rider_id?: string | null
           rider_payout_id?: string | null
           rider_payout_paise?: number
@@ -1142,6 +1157,13 @@ export type Database = {
             columns: ["drop_point_id"]
             isOneToOne: false
             referencedRelation: "drop_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_rider_cash_settled_by_fkey"
+            columns: ["rider_cash_settled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1348,6 +1370,8 @@ export type Database = {
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           room_note: string | null
+          terms_accepted_at: string | null
+          terms_version: number
         }
         Insert: {
           blocked?: boolean
@@ -1360,6 +1384,8 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           room_note?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: number
         }
         Update: {
           blocked?: boolean
@@ -1372,6 +1398,8 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           room_note?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: number
         }
         Relationships: [
           {
@@ -1640,6 +1668,38 @@ export type Database = {
         }
         Relationships: []
       }
+      suggestions: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          profile_id: string
+          read_at: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          read_at?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_alerts: {
         Row: {
           created_at: string
@@ -1765,6 +1825,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_terms: {
+        Args: { p_version: number }
+        Returns: undefined
+      }
       apply_as_rider: {
         Args: { p_upi_vpa: string }
         Returns: {
@@ -1814,6 +1878,8 @@ export type Database = {
           release_at: string | null
           released_at: string | null
           rider_assigned_at: string | null
+          rider_cash_settled_at: string | null
+          rider_cash_settled_by: string | null
           rider_id: string | null
           rider_payout_id: string | null
           rider_payout_paise: number
@@ -1879,7 +1945,30 @@ export type Database = {
         Args: { p_send: boolean; p_topic: string }
         Returns: boolean
       }
+      attach_shop_login: {
+        Args: {
+          p_profile_id: string
+          p_shop_id: string
+          p_staff_role: Database["public"]["Enums"]["staff_role"]
+        }
+        Returns: undefined
+      }
+      can_manage_shop_logins: {
+        Args: {
+          p_shop_id: string
+          p_staff_role: Database["public"]["Enums"]["staff_role"]
+        }
+        Returns: boolean
+      }
+      can_watch_orders_channel: {
+        Args: { p_topic: string }
+        Returns: boolean
+      }
       cancel_group_order: { Args: { p_group_id: string }; Returns: undefined }
+      check_open_checkout_limit: {
+        Args: { p_student: string }
+        Returns: undefined
+      }
       claim_batch: {
         Args: { p_drop_point_id: string; p_order_ids: string[] }
         Returns: number
@@ -1908,6 +1997,8 @@ export type Database = {
           release_at: string | null
           released_at: string | null
           rider_assigned_at: string | null
+          rider_cash_settled_at: string | null
+          rider_cash_settled_by: string | null
           rider_id: string | null
           rider_payout_id: string | null
           rider_payout_paise: number
@@ -2023,6 +2114,7 @@ export type Database = {
         Returns: string
       }
       forget_device_tokens: { Args: { p_tokens: string[] }; Returns: undefined }
+      format_rupees: { Args: { p_paise: number }; Returns: string }
       funnel_report: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -2031,10 +2123,6 @@ export type Database = {
         }[]
       }
       hook_before_user_created: { Args: { event: Json }; Returns: Json }
-      invite_shop_staff: {
-        Args: { p_email: string; p_shop_id: string }
-        Returns: string
-      }
       is_admin: { Args: never; Returns: boolean }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_online_rider: { Args: never; Returns: boolean }
@@ -2129,6 +2217,17 @@ export type Database = {
           id: string
           shop_id: string
           title: string
+        }[]
+      }
+      my_rider_cash: {
+        Args: never
+        Returns: {
+          amount_paise: number
+          limit_paise: number
+          oldest_at: string
+          orders: number
+          shop_id: string
+          shop_name: string
         }[]
       }
       my_shop_ids: { Args: never; Returns: string[] }
@@ -2239,6 +2338,8 @@ export type Database = {
           release_at: string | null
           released_at: string | null
           rider_assigned_at: string | null
+          rider_cash_settled_at: string | null
+          rider_cash_settled_by: string | null
           rider_id: string | null
           rider_payout_id: string | null
           rider_payout_paise: number
@@ -2290,6 +2391,8 @@ export type Database = {
           release_at: string | null
           released_at: string | null
           rider_assigned_at: string | null
+          rider_cash_settled_at: string | null
+          rider_cash_settled_by: string | null
           rider_id: string | null
           rider_payout_id: string | null
           rider_payout_paise: number
@@ -2348,6 +2451,8 @@ export type Database = {
           release_at: string | null
           released_at: string | null
           rider_assigned_at: string | null
+          rider_cash_settled_at: string | null
+          rider_cash_settled_by: string | null
           rider_id: string | null
           rider_payout_id: string | null
           rider_payout_paise: number
@@ -2405,11 +2510,26 @@ export type Database = {
       }
       release_delivery: { Args: { p_order_id: string }; Returns: undefined }
       release_scheduled_orders: { Args: { p_at?: string }; Returns: number }
-      remove_shop_staff: {
-        Args: { p_profile_id: string; p_shop_id: string }
-        Returns: undefined
+      remove_order_items: {
+        Args: { p_item_ids: string[]; p_order_id: string }
+        Returns: Database["public"]["Tables"]["orders"]["Row"]
       }
       request_account_deletion: { Args: never; Returns: undefined }
+      rider_cash_due_paise: { Args: { p_rider_id: string }; Returns: number }
+      rider_cash_limit_paise: { Args: never; Returns: number }
+      rider_cash_report: {
+        Args: never
+        Returns: {
+          amount_paise: number
+          oldest_at: string
+          orders: number
+          rider_id: string
+          rider_name: string
+          rider_phone: string
+          shop_id: string
+          shop_name: string
+        }[]
+      }
       rider_payout_for: {
         Args: { p_order: Database["public"]["Tables"]["orders"]["Row"] }
         Returns: number
@@ -2556,12 +2676,54 @@ export type Database = {
         }
       }
       set_rider_online: { Args: { p_online: boolean }; Returns: undefined }
+      settle_rider_cash: {
+        Args: { p_rider_id: string; p_shop_id: string }
+        Returns: number
+      }
+      list_suggestions: {
+        Args: { p_limit?: number }
+        Returns: {
+          body: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          read_at: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
       shop_ratings: {
         Args: never
         Returns: {
           average: number
           ratings: number
           shop_id: string
+        }[]
+      }
+      shop_month_orders: {
+        Args: { p_month: string; p_shop_id: string }
+        Returns: {
+          code: string
+          completed_at: string
+          item_sales_paise: number
+          mode: Database["public"]["Enums"]["order_mode"]
+          order_id: string
+          pay_method: Database["public"]["Enums"]["pay_method"]
+          platform_fee_paise: number
+          token_no: number
+          total_paise: number
+        }[]
+      }
+      shop_monthly_bills: {
+        Args: { p_month: string }
+        Returns: {
+          delivery_paise: number
+          item_sales_paise: number
+          orders: number
+          platform_fee_paise: number
+          shop_id: string
+          shop_name: string
         }[]
       }
       shop_report: {
@@ -2574,6 +2736,17 @@ export type Database = {
           dropped: number
           orders: number
           sales_paise: number
+        }[]
+      }
+      shop_rider_cash: {
+        Args: { p_shop_id: string }
+        Returns: {
+          amount_paise: number
+          oldest_at: string
+          orders: number
+          rider_id: string
+          rider_name: string
+          rider_phone: string
         }[]
       }
       shop_top_items: {
@@ -2628,6 +2801,8 @@ export type Database = {
           release_at: string | null
           released_at: string | null
           rider_assigned_at: string | null
+          rider_cash_settled_at: string | null
+          rider_cash_settled_by: string | null
           rider_id: string | null
           rider_payout_id: string | null
           rider_payout_paise: number

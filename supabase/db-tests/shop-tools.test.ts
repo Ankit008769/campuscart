@@ -60,21 +60,14 @@ test('counter staff can switch rush mode but not commission', async () => {
   await assert.rejects(call(counter, 'update public.shops set rush_extra_minutes = 60 where id = $1', [SHOP.general]), /Only admins/);
 });
 
-test('owners add and remove counter staff; counters cannot manage staff', async () => {
-  const [{ result: invited }] = await call(owner, `select public.invite_shop_staff($1, 'New.Helper@gmail.com') as result`, [SHOP.general]);
-  assert.equal(invited, 'invited');
-  const [login] = await asOwner<{ role: string; shop_id: string }>(db, `select role, shop_id from public.allowed_logins where email = 'new.helper@gmail.com'`);
-  assert.deepEqual(login, { role: 'merchant_staff', shop_id: SHOP.general });
-
-  await assert.rejects(call(owner, `select public.invite_shop_staff($1, '24bce999@nith.ac.in')`, [SHOP.general]), /personal Gmail/);
-  await assert.rejects(call(counter, `select public.invite_shop_staff($1, 'x.y@gmail.com')`, [SHOP.general]), /Only the shop owner/);
-
+test('owners see their whole team and manage counter logins; counters manage nothing', async () => {
   const staff = await call(owner, 'select profile_id, role from public.shop_staff where shop_id = $1 order by role', [SHOP.general]);
   assert.equal(staff.length, 2, 'the owner sees the whole team');
   assert.equal((await call(counter, 'select profile_id from public.shop_staff where shop_id = $1', [SHOP.general])).length, 1);
 
-  await assert.rejects(call(counter, 'select public.remove_shop_staff($1, $2)', [SHOP.general, owner]), /Only the shop owner/);
-  await assert.rejects(call(owner, 'select public.remove_shop_staff($1, $2)', [SHOP.general, owner]), /No counter staff/);
-  await call(owner, 'select public.remove_shop_staff($1, $2)', [SHOP.general, counter]);
-  assert.equal((await call(owner, 'select profile_id from public.shop_staff where shop_id = $1', [SHOP.general])).length, 1);
+  const may = async (who: string, job: string) =>
+    (await call(who, `select public.can_manage_shop_logins($1, $2::public.staff_role) as ok`, [SHOP.general, job]))[0].ok;
+  assert.equal(await may(owner, 'counter'), true);
+  assert.equal(await may(owner, 'owner'), false);
+  assert.equal(await may(counter, 'counter'), false);
 });

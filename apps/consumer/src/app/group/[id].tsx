@@ -146,7 +146,7 @@ export default function GroupOrderScreen() {
           return (
             <View key={member.student_id} style={styles.row}>
               <ThemedText type="small" style={styles.flex}>
-                {member.profiles?.name || 'A student'}
+                {member.display_name || 'A student'}
                 {member.student_id === group.host_id ? ' (host)' : ''} · {count} {count === 1 ? 'item' : 'items'}
               </ThemedText>
               {member.share_paise !== null && <ThemedText type="small">{formatPaise(member.share_paise)}</ThemedText>}
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   code: {
-    fontWeight: 800,
+    fontWeight: 600,
     letterSpacing: 2,
   },
   primary: {
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 15,
   },
   disabled: {
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   },
   remove: {
     color: Brand.red,
-    fontWeight: 600,
+    fontWeight: 500,
     textAlign: 'center',
     marginTop: Spacing.two,
   },

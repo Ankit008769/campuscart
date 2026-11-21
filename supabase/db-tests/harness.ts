@@ -30,8 +30,13 @@ const SUPABASE_STUB = `
     select nullif(current_setting('request.jwt.claims', true)::jsonb ->> 'sub', '')::uuid
   $$;
 
+  create function auth.jwt() returns jsonb language sql stable as $$
+    select coalesce(current_setting('request.jwt.claims', true)::jsonb, '{}'::jsonb)
+  $$;
+
   grant usage on schema auth, extensions, public to anon, authenticated, service_role;
   grant execute on function auth.uid() to anon, authenticated, service_role;
+  grant execute on function auth.jwt() to anon, authenticated, service_role;
   alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
   alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
@@ -76,20 +81,32 @@ export async function asOwner<T>(db: PGlite, sql: string, params: unknown[] = []
   return (await db.query<T>(sql, params)).rows;
 }
 
-/** Creates an auth user the way Supabase Auth would, which fires the profile trigger. */
-export async function addUser(db: PGlite, email: string, name = 'Test User'): Promise<string> {
+let phoneSeq = 0;
+
+/**
+ * Creates an auth user the way Supabase Auth would, which fires the profile trigger. Each one gets a
+ * mobile number, which ordering needs; pass `{ phone: false }` for someone who hasn't added one.
+ */
+export async function addUser(db: PGlite, email: string, name = 'Test User', { phone = true } = {}): Promise<string> {
   const [user] = await asOwner<{ id: string }>(
     db,
     `insert into auth.users (email, raw_user_meta_data) values ($1, jsonb_build_object('full_name', $2::text)) returning id`,
     [email, name],
   );
+  if (phone) {
+    phoneSeq += 1;
+    await asOwner(db, 'update public.profiles set phone = $2 where id = $1', [user.id, `+9170000${String(phoneSeq).padStart(5, '0')}`]);
+  }
   return user.id;
 }
 
-/** Runs `fn` as a signed-in user (role authenticated), or signed out (role anon) when userId is null. */
-export async function as<T>(db: PGlite, userId: string | null, fn: () => Promise<T>): Promise<T> {
+/**
+ * Runs `fn` as a signed-in user (role authenticated), or signed out (role anon) when userId is null.
+ * Sessions count as past the Authenticator step unless `aal` says otherwise.
+ */
+export async function as<T>(db: PGlite, userId: string | null, fn: () => Promise<T>, aal = 'aal2'): Promise<T> {
   await db.query(`select set_config('request.jwt.claims', $1, false)`, [
-    JSON.stringify(userId ? { sub: userId, role: 'authenticated' } : {}),
+    JSON.stringify(userId ? { sub: userId, role: 'authenticated', aal } : {}),
   ]);
   await db.exec(userId ? 'set role authenticated' : 'set role anon');
   try {
@@ -140,6 +157,21 @@ export async function transition(
     [orderId, to, extra.note ?? null, extra.code ?? null, extra.prepMinutes ?? null],
   );
   return result.rows[0];
+}
+
+/**
+ * Hands over a student's open orders (delivered or collected), as if they had picked them up, so a
+ * test that keeps ordering as one student stays under the limit of 3 open checkouts. Orders a rider
+ * is carrying are left alone: their delivery belongs to the rider's tests and payouts.
+ */
+export async function settleOrders(db: PGlite, studentId: string): Promise<void> {
+  await asOwner(
+    db,
+    `update public.orders
+     set status = case when mode = 'pickup' then 'collected' else 'delivered' end::public.order_status, completed_at = now()
+     where student_id = $1 and rider_id is null and status not in ('delivered', 'collected', 'rejected', 'cancelled', 'expired')`,
+    [studentId],
+  );
 }
 
 export async function dropPointId(db: PGlite, name: string): Promise<string> {

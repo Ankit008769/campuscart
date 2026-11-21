@@ -1,16 +1,18 @@
 "use client";
 
-import { amIAdmin } from "@campuscart/core";
+import { amIAdmin, authenticatorStatus, getMyProfile, loginIdOf } from "@campuscart/core";
 import type { Session } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { AuthenticatorStep, IdSignIn } from "@/components/admin-sign-in";
 import { supabase } from "@/lib/supabase";
 
 type Gate =
   | { state: "loading" }
-  | { state: "signed-out"; error?: string }
+  | { state: "signed-out" }
+  | { state: "needs-code" }
   | { state: "not-admin"; email: string }
   | { state: "admin"; email: string };
 
@@ -25,10 +27,12 @@ const NAV = [
   { href: "/coupons", label: "Coupons" },
   { href: "/campaigns", label: "Campaigns" },
   { href: "/reports", label: "Reports" },
+  { href: "/billing", label: "Monthly bills" },
+  { href: "/suggestions", label: "Suggestions" },
   { href: "/people", label: "People" },
 ] as const;
 
-/** Shows the panel only to signed-in admins; everyone else gets the Google sign-in. */
+/** Shows the panel only to admins past their Authenticator code; everyone else gets the sign-in. */
 export function AdminGate({ children }: { children: ReactNode }) {
   const [gate, setGate] = useState<Gate>({ state: "loading" });
   const pathname = usePathname();
@@ -40,9 +44,15 @@ export function AdminGate({ children }: { children: ReactNode }) {
         setGate({ state: "signed-out" });
         return;
       }
-      const email = session.user.email ?? "";
-      amIAdmin(supabase).then(
-        (isAdmin) => active && setGate(isAdmin ? { state: "admin", email } : { state: "not-admin", email }),
+      const email = loginIdOf(session.user.email) ?? session.user.email ?? "";
+      (async () => {
+        const { role } = await getMyProfile(supabase, session.user.id);
+        if (role !== "admin") return { state: "not-admin", email } as const;
+        const { passed } = await authenticatorStatus(supabase);
+        if (!passed) return { state: "needs-code" } as const;
+        return (await amIAdmin(supabase)) ? ({ state: "admin", email } as const) : ({ state: "not-admin", email } as const);
+      })().then(
+        (next) => active && setGate(next),
         () => active && setGate({ state: "not-admin", email }),
       );
     };
@@ -57,14 +67,6 @@ export function AdminGate({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function signIn() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) setGate({ state: "signed-out", error: error.message });
-  }
-
   if (gate.state === "loading") {
     return <Centered>Checking your sign-in…</Centered>;
   }
@@ -74,13 +76,18 @@ export function AdminGate({ children }: { children: ReactNode }) {
       <Centered>
         <h1 className="text-xl font-semibold">CampusCart admin</h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">Only approved admin accounts can open this panel.</p>
-        <button
-          onClick={signIn}
-          className="rounded-lg bg-[#1A9E4B] px-4 py-2 font-semibold text-white hover:bg-[#158a40]"
-        >
-          Sign in with Google
+        <IdSignIn />
+      </Centered>
+    );
+  }
+
+  if (gate.state === "needs-code") {
+    return (
+      <Centered>
+        <AuthenticatorStep />
+        <button onClick={() => supabase.auth.signOut()} className="text-sm font-semibold text-[#1A9E4B] underline">
+          Sign out
         </button>
-        {gate.error && <p className="text-sm text-red-600">{gate.error}</p>}
       </Centered>
     );
   }

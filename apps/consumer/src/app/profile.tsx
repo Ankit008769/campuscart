@@ -2,8 +2,9 @@ import { getMyProfile, listDropPoints, normalizeIndianMobile, requestAccountDele
 import { Brand, Radius } from '@campuscart/ui';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
+import { DropPointPicker } from '@/components/drop-point-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -115,7 +116,7 @@ export default function ProfileScreen() {
 
         <ThemedText type="smallBold">Mobile number</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Shops and riders use it to reach you about an order.
+          Shops use it to reach you about an order.
         </ThemedText>
         <TextInput
           value={phone}
@@ -128,16 +129,7 @@ export default function ProfileScreen() {
         />
 
         <ThemedText type="smallBold">Your usual hostel or drop point</ThemedText>
-        <View style={styles.chips}>
-          {dropPoints.map((point) => (
-            <Pressable
-              key={point.id}
-              onPress={() => setDropPointId(point.id)}
-              style={[styles.chip, dropPointId === point.id && styles.chipActive]}>
-              <Text style={[styles.chipText, { color: dropPointId === point.id ? '#ffffff' : theme.text }]}>{point.name}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <DropPointPicker points={dropPoints} value={dropPointId} onChange={setDropPointId} />
 
         <ThemedText type="smallBold">Room or wing</ThemedText>
         <TextInput
@@ -188,26 +180,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: Spacing.two,
   },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-    marginBottom: Spacing.two,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: Brand.green,
-    borderRadius: 999,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + Spacing.half,
-  },
-  chipActive: {
-    backgroundColor: Brand.green,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: 600,
-  },
   message: {
     borderRadius: Radius.small,
     padding: Spacing.two,
@@ -230,7 +202,7 @@ const styles = StyleSheet.create({
   },
   saveText: {
     color: '#ffffff',
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: 16,
   },
   disabled: {
@@ -243,6 +215,6 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     color: Brand.red,
-    fontWeight: 700,
+    fontWeight: 600,
   },
 });

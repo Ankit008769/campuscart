@@ -221,6 +221,9 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
+# On, because shops and admins sign in with an ID and password (accounts only admins create, see
+# supabase/functions/shop-logins). hook_before_user_created refuses every public email sign-up, so
+# nobody can create an account here or make the project email a student.
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
@@ -326,12 +329,13 @@ max_frequency = "5s"
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
 # `twitter`, `x`, `slack`, `spotify`, `workos`, `zoom`.
 
-# CampusCart sign-in: Google Cloud project campuscart-512806, web client "CampusCart Supabase".
+# CampusCart sign-in: Google Cloud project "Campus Cart NITH" (sunny-incentive-513716-s6, owned by
+# ronakdotasara05@gmail.com), web client "CampusCart Supabase".
 # The client ID is public. The secret lives only in the Supabase dashboard; for local `supabase start`,
 # put it in supabase/.env (git-ignored) as SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET.
 [auth.external.google]
 enabled = true
-client_id = "356353308771-tr1eijq75g1rmikn30e7e1fs5l9iheoc.apps.googleusercontent.com"
+client_id = "399649860734-nkoifkhbrc5ihv2r177dpbea71oo2l21.apps.googleusercontent.com"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 redirect_uri = ""
 url = ""
@@ -441,6 +445,10 @@ verify_jwt = false
 # The student app calls this with the student's session; the function checks it itself
 # (auth.getUser), which works with both legacy and new API keys.
 [functions.price-print]
+verify_jwt = false
+
+# Admins and shop owners call this with their session; the function checks it itself.
+[functions.shop-logins]
 verify_jwt = false
 
 # Called hourly by pg_cron with no user token. It deletes only what expired_print_files lists.

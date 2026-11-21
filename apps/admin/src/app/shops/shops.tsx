@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  DEFAULT_FEE_RULES,
   WEEK_DAYS,
   WEEK_DAY_LABEL,
   createShop,
   formatPaise,
   importCatalog,
+  isUpiVpa,
   listFeeRules,
   listPrintSettings,
   listShopsForAdmin,
@@ -26,18 +26,9 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { supabase } from "@/lib/supabase";
 
-type Shop = Awaited<ReturnType<typeof listShopsForAdmin>>[number];
+import { FEES } from "./fees";
 
-// The fee_rules keys place_order reads, with what each one means.
-const FEES = [
-  { key: "delivery_fee", label: "Delivery fee", fallback: DEFAULT_FEE_RULES.deliveryFeePaise },
-  { key: "small_cart_limit", label: "No small-cart fee from", fallback: DEFAULT_FEE_RULES.smallCartLimitPaise },
-  { key: "small_cart_fee", label: "Small-cart fee", fallback: DEFAULT_FEE_RULES.smallCartFeePaise },
-  { key: "platform_fee", label: "Platform fee", fallback: DEFAULT_FEE_RULES.platformFeePaise },
-  { key: "night_surcharge", label: "Night delivery, 11 PM to 6 AM (extra)", fallback: 0 },
-  // Not part of the bill: what a student rider earns per delivery (defaults to the delivery fee).
-  { key: "rider_payout", label: "Rider earns per delivery", fallback: DEFAULT_FEE_RULES.deliveryFeePaise },
-] as const;
+type Shop = Awaited<ReturnType<typeof listShopsForAdmin>>[number];
 
 const messageOf = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
 const input =
@@ -253,6 +244,7 @@ function ShopRow({ shop, onSaved, onError }: { shop: Shop; onSaved: () => void; 
     prep_minutes: String(shop.prep_minutes),
     commission: String(shop.commission_bps / 100),
     phone: shop.phone ?? "",
+    upi: shop.upi_vpa ?? "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -262,6 +254,8 @@ function ShopRow({ shop, onSaved, onError }: { shop: Shop; onSaved: () => void; 
     if (!Number.isInteger(prep) || prep < 1 || prep > 120) return onError("Prep time is 1 to 120 minutes.");
     if (!Number.isFinite(commissionBps) || commissionBps < 0 || commissionBps > 10000)
       return onError("Commission is 0 to 100 percent.");
+    const upi = draft.upi.trim();
+    if (upi && !isUpiVpa(upi)) return onError("That isn't a UPI ID (like shopname@okaxis).");
     const update: ShopUpdate = {
       is_open: draft.is_open,
       does_delivery: draft.does_delivery,
@@ -269,6 +263,7 @@ function ShopRow({ shop, onSaved, onError }: { shop: Shop; onSaved: () => void; 
       prep_minutes: prep,
       commission_bps: commissionBps,
       phone: draft.phone.trim() || null,
+      upi_vpa: upi || null,
       hours: shopHoursValue(hours.set ? hours : null),
     };
     setSaving(true);
@@ -333,6 +328,10 @@ function ShopRow({ shop, onSaved, onError }: { shop: Shop; onSaved: () => void; 
             value={draft.phone}
             onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
           />
+        </label>
+        <label className="flex items-center gap-1.5 text-sm" title="Students pay this at handover. Check it with the owner.">
+          UPI ID
+          <input className={`${input} w-44`} value={draft.upi} onChange={(e) => setDraft({ ...draft, upi: e.target.value })} />
         </label>
         <button
           onClick={save}

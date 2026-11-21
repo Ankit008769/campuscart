@@ -92,6 +92,42 @@ export async function listCategories(client: CampusClient) {
   return data;
 }
 
+/**
+ * Takes items the shop doesn't have off an order before it is packed. The rest is re-priced (fees
+ * never go up), the items are marked out of stock, and the student is told the new amount.
+ */
+export async function removeOrderItems(client: CampusClient, orderId: string, itemIds: string[]) {
+  const { error } = await client.rpc('remove_order_items', { p_order_id: orderId, p_item_ids: itemIds });
+  if (error) throw error;
+}
+
+/** The oldest Android build (versionCode) still allowed; 0 lets every build in. */
+export async function minAndroidVersionCode(client: CampusClient): Promise<number> {
+  const { data, error } = await client.from('app_settings').select('min_android_version_code').maybeSingle();
+  if (error) throw error;
+  return data?.min_android_version_code ?? 0;
+}
+
+/** A photo for each shop and category on Home: the first of its items, by name, that has one. */
+export async function homePhotos(client: CampusClient) {
+  const { data, error } = await client
+    .from('products')
+    .select('shop_id, category_id, image_path')
+    .eq('active', true)
+    .not('image_path', 'is', null)
+    .order('name')
+    .limit(1000);
+  if (error) throw error;
+  const byShop: Record<string, string> = {};
+  const byCategory: Record<string, string> = {};
+  for (const p of data) {
+    if (!p.image_path) continue;
+    byShop[p.shop_id] ??= p.image_path;
+    if (p.category_id) byCategory[p.category_id] ??= p.image_path;
+  }
+  return { byShop, byCategory };
+}
+
 /** The signed-in person's own profile. */
 export async function getMyProfile(client: CampusClient, userId: string) {
   const { data, error } = await client
@@ -125,7 +161,7 @@ export async function requestAccountDeletion(client: CampusClient) {
   if (error) throw error;
 }
 
-/** Which app a push token belongs to; the student and shop apps are separate Expo projects. */
+/** Which side of the app a push token gets messages for: 'consumer' (students) or 'merchant' (shops). */
 export type PushApp = 'consumer' | 'merchant';
 
 /** Saves this phone's Expo push token for the signed-in person, taking it over from any other account. */
@@ -250,7 +286,7 @@ export async function getFeeRules(client: CampusClient): Promise<FeeRules> {
 // Kept as one literal so supabase-js can infer the row type. Orders point at profiles twice
 // (student and rider), so each embed names its foreign key.
 export const ORDER_DETAIL =
-  'id, code, status, mode, pay_method, subtotal_paise, delivery_fee_paise, small_cart_fee_paise, platform_fee_paise, surcharge_paise, discount_paise, coupon_code, total_paise, token_no, prep_minutes, room_note, cancel_reason, scheduled_for, release_at, released_at, placed_at, accepted_at, ready_at, out_at, completed_at, cancelled_at, shops (id, name), drop_points (name, gate_only, lat, lng), order_items (id, name_snapshot, price_paise_snapshot, qty), rider_id, profiles!orders_student_id_fkey (name, phone), rider:profiles!orders_rider_id_fkey (name, phone), print_jobs (file_path, file_name, pages, copies, color, double_sided, file_deleted_at)' as const;
+  'id, code, status, mode, pay_method, subtotal_paise, delivery_fee_paise, small_cart_fee_paise, platform_fee_paise, surcharge_paise, discount_paise, coupon_code, total_paise, token_no, prep_minutes, room_note, cancel_reason, scheduled_for, release_at, released_at, placed_at, accepted_at, ready_at, out_at, completed_at, cancelled_at, shops (id, name, upi_vpa, phone), drop_points (name, gate_only, lat, lng), order_items (id, name_snapshot, price_paise_snapshot, qty), rider_id, profiles!orders_student_id_fkey (name, phone), rider:profiles!orders_rider_id_fkey (name, phone), print_jobs (file_path, file_name, pages, copies, color, double_sided, file_deleted_at)' as const;
 
 /**
  * One order with its items, shop, drop point and customer. The delivery code comes back only for
@@ -313,12 +349,15 @@ export async function listMyOrders(client: CampusClient, studentId: string) {
 
 export const OPEN_STATUSES = ['placed', 'accepted', 'ready', 'out_for_delivery'] as const satisfies readonly OrderStatus[];
 
-/** A shop's open orders, oldest first, so the counter works through them in order. */
-export async function listShopOrders(client: CampusClient, shopId: string) {
+/**
+ * A shop's open orders, oldest first, so the counter works through them in order. Pass several
+ * shop ids to get every outlet of one owner together, for a login that runs them all.
+ */
+export async function listShopOrders(client: CampusClient, shopIds: string | readonly string[]) {
   const { data, error } = await client
     .from('orders')
     .select(ORDER_DETAIL)
-    .eq('shop_id', shopId)
+    .in('shop_id', typeof shopIds === 'string' ? [shopIds] : [...shopIds])
     .in('status', OPEN_STATUSES)
     .order('placed_at');
   if (error) throw error;
@@ -326,13 +365,15 @@ export async function listShopOrders(client: CampusClient, shopId: string) {
 }
 
 /**
- * Calls onChange whenever an order matching `filter` (a Realtime filter such as `shop_id=eq.<id>`,
- * or null for every order the signed-in person may read) is created or changes. Realtime applies
- * the same row-level security as reads. Returns an unsubscribe.
+ * Calls onChange whenever an order matching `filter` (a Realtime filter on student_id, rider_id,
+ * shop_id, cart_id or id, such as `shop_id=eq.<id>`, or null for the admin board's every order) is
+ * created or changes. The channel is private: can_watch_orders_channel lets each person join only
+ * their own lists, and Realtime applies the same row-level security as reads. Returns an unsubscribe.
  */
 export function watchOrders(client: CampusClient, filter: string | null, onChange: () => void): () => void {
+  const suffix = Math.random().toString(36).slice(2) || '0';
   const channel = client
-    .channel(`orders:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
+    .channel(`orders:${filter ?? 'all'}:${suffix}`, { config: { private: true } })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', ...(filter ? { filter } : {}) }, () =>
       onChange(),
     )

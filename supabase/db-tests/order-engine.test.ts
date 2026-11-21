@@ -5,7 +5,7 @@ import type { PGlite } from '@electric-sql/pglite';
 
 import { calculateBill } from '../../packages/core/src/bill.ts';
 import { ORDER_STATUSES, canTransition, type OrderActor, type OrderMode } from '../../packages/core/src/orders.ts';
-import { SHOP, VARIANT, addUser, as, asOwner, createDb, dropPointId, placeOrder, transition } from './harness.ts';
+import { SHOP, VARIANT, addUser, as, asOwner, createDb, dropPointId, placeOrder, settleOrders, transition } from './harness.ts';
 
 let db: PGlite;
 let asha: string;
@@ -63,13 +63,16 @@ test('can_transition agrees with canTransition for every status, mode and actor'
   assert.deepEqual(mismatches, []);
 });
 
+// seed.sql's fee rules, which these tests are written against (production's are set by admins).
+const SEED_FEES = { deliveryFeePaise: 1500, smallCartLimitPaise: 9900, smallCartFeePaise: 1000, platformFeePaise: 400 };
+
 test('calculate_bill agrees with calculateBill around the small-cart limit', async () => {
   for (const subtotal of [0, 1, 5000, 9899, 9900, 9901, 25000]) {
     for (const mode of ['delivery', 'pickup'] as const) {
       const [row] = (
         await db.query<Record<string, number>>(`select * from public.calculate_bill($1, $2::public.order_mode)`, [subtotal, mode])
       ).rows;
-      const expected = calculateBill(subtotal, mode);
+      const expected = calculateBill(subtotal, mode, SEED_FEES);
       assert.deepEqual(
         {
           subtotalPaise: row.subtotal_paise,
@@ -215,6 +218,7 @@ test('students cancel only before the shop accepts', async () => {
 });
 
 test('shops and admins must give a reason to reject or cancel', async () => {
+  await settleOrders(db, asha);
   const order = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
   await assert.rejects(as(db, generalOwner, () => transition(db, order.id, 'rejected')), /Give a reason/);
   const rejected = await as(db, generalOwner, () => transition(db, order.id, 'rejected', { note: 'Out of Maggi' }));
@@ -228,14 +232,16 @@ test('shops and admins must give a reason to reject or cancel', async () => {
 });
 
 test('other students cannot touch an order, or even learn it exists', async () => {
+  await settleOrders(db, asha);
   const order = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
   await assert.rejects(as(db, ravi, () => transition(db, order.id, 'cancelled')), /Order not found/);
 });
 
-test('orders left unaccepted for 3 minutes expire', async () => {
+test('orders left unaccepted for 7 minutes expire', async () => {
+  await settleOrders(db, asha);
   const stale = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
   const fresh = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
-  await asOwner(db, `update public.orders set placed_at = now() - interval '4 minutes' where id = $1`, [stale.id]);
+  await asOwner(db, `update public.orders set placed_at = now() - interval '8 minutes' where id = $1`, [stale.id]);
 
   const [{ expired }] = await asOwner<{ expired: number }>(db, 'select public.expire_stale_orders() as expired');
   assert.ok(expired >= 1);
@@ -248,4 +254,38 @@ test('orders left unaccepted for 3 minutes expire', async () => {
   const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
   assert.deepEqual(byId[stale.id], { id: stale.id, status: 'expired', cancel_reason: 'Not accepted in time' });
   assert.equal(byId[fresh.id].status, 'placed');
+});
+
+test('a shop that has not answered after 2 minutes is reminded once, and the order stays open', async () => {
+  await settleOrders(db, asha);
+  const waiting = await deliveryOrder([{ variant_id: VARIANT.maggi70g, qty: 1 }]);
+  const reminders = () =>
+    asOwner<{ user_id: string; title: string }>(
+      db,
+      `select user_id, title from public.push_outbox where app = 'merchant' and title like '%still waiting' and data ->> 'orderId' = $1`,
+      [waiting.id],
+    );
+
+  await asOwner(db, 'select public.expire_stale_orders()');
+  assert.equal((await reminders()).length, 0);
+
+  await asOwner(db, `update public.orders set placed_at = now() - interval '3 minutes' where id = $1`, [waiting.id]);
+  await asOwner(db, 'select public.expire_stale_orders()');
+  await asOwner(db, 'select public.expire_stale_orders()');
+  const sent = await reminders();
+  assert.ok(sent.length >= 1);
+  assert.equal(new Set(sent.map((r) => r.user_id)).size, sent.length, 'one reminder per shop login');
+  const [row] = await asOwner<{ status: string }>(db, 'select status from public.orders where id = $1', [waiting.id]);
+  assert.equal(row.status, 'placed');
+
+  // Dropped at 7 minutes, with the kinder note to the student.
+  await asOwner(db, `update public.orders set placed_at = now() - interval '8 minutes' where id = $1`, [waiting.id]);
+  await asOwner(db, 'select public.expire_stale_orders()');
+  const [note] = await asOwner<{ title: string; body: string }>(
+    db,
+    `select title, body from public.push_outbox where app = 'consumer' and data ->> 'orderId' = $1 order by created_at desc limit 1`,
+    [waiting.id],
+  );
+  assert.match(note.title, /was too busy$/);
+  assert.match(note.body, /Nothing to pay/);
 });
