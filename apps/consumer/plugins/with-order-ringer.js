@@ -69,7 +69,6 @@ const withRingerDependencies = (config) =>
       /\ndependencies \{/,
       `\ndependencies {
     // The order ringer (plugins/with-order-ringer.js) extends expo-notifications' Firebase service.
-    implementation project(':expo-notifications')
     implementation 'com.google.firebase:firebase-messaging:${version}'`,
     );
     cfg.modResults.contents = gradle;
