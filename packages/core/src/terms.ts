@@ -152,7 +152,7 @@ export const TERMS: TermsSection[] = [
     for: 'everyone',
     points: [
       'For anything about the app, write to ' + SUPPORT_EMAIL + '. You can also send ideas from Account → Suggestions.',
-      'Grievance officer: Ronak Dotasara, ' + SUPPORT_EMAIL + '. We will acknowledge a complaint within 48 hours and try to resolve it within 30 days.',
+      'Grievance officers: Ronak Dotasara and Ankit Bhukar, ' + SUPPORT_EMAIL + '. We will acknowledge a complaint within 48 hours and try to resolve it within 30 days.',
       'These terms follow the laws of India. Any dispute that can’t be settled by talking it through will be heard by the courts at Hamirpur, Himachal Pradesh.',
     ],
   },
