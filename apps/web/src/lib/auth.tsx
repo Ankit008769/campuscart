@@ -1,4 +1,4 @@
-import { TERMS_VERSION, acceptTerms, completeSignInFromUrl, getMyProfile, startGoogleSignInRedirect } from '@campuscart/core';
+import { TERMS_VERSION, acceptTerms, completeSignInFromUrl, getMyProfile, signInWithId, startGoogleSignInRedirect } from '@campuscart/core';
 import type { Session } from '@supabase/supabase-js';
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from 'react';
 
@@ -15,6 +15,8 @@ type Auth = {
   error: string | null;
   /** Goes to Google and comes back signed in. `anyAccount` drops the @nith.ac.in hint (Play reviewers, approved Gmail accounts). */
   signIn: (options?: { anyAccount?: boolean }) => Promise<void>;
+  /** Shops sign in with the ID and password from the CampusCart team. Throws if they are wrong. */
+  signInWithLogin: (loginId: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   reloadProfile: () => Promise<void>;
 };
@@ -94,6 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         redirectTo: `${window.location.origin}/`,
         hostedDomain: anyAccount ? undefined : 'nith.ac.in',
       });
+    },
+    signInWithLogin: async (loginId, password) => {
+      setError(null);
+      await signInWithId(supabase, loginId, password);
     },
     signOut: async () => {
       await supabase.auth.signOut();

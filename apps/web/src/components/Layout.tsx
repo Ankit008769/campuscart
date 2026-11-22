@@ -1,6 +1,6 @@
 import { formatPaise } from '@campuscart/core';
 import { useEffect, useRef, useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { CartDrawer } from './CartDrawer';
 import { useAuth } from '../lib/auth';
@@ -157,13 +157,13 @@ function Navigation() {
   );
 }
 
-/** Shops take orders in the Android app and admins use the admin site; this website is for students. */
+/** Admins run Campus Cart from the admin website; this site is for students and shops. */
 function NotForStudents() {
   const { signOut } = useAuth();
   return (
     <div className="empty-state">
-      <h2>This website is for students</h2>
-      <p>Shops take orders in the Campus Cart Android app, which rings for every new order. Admins use the admin website.</p>
+      <h2>Admins use the admin website</h2>
+      <p>This website is for students ordering and for shops taking orders. Shops can also use the Campus Cart Android app, which rings even when it’s closed.</p>
       <p>
         <a className="button" href={PLAY_URL} target="_blank" rel="noreferrer">
           Get the Android app
@@ -177,10 +177,36 @@ function NotForStudents() {
 }
 
 const STUDENT_ROLES = new Set(['student', 'rider']);
+const SHOP_ROLES = new Set(['merchant_owner', 'merchant_staff']);
+
+/** The old site's staff header for shops: the wordmark marked SHOPKEEPER, Orders and sign-out. */
+function ShopHeader() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  return (
+    <header className="site-header">
+      <Link className="brand" to="/partner">
+        campus<span>cart</span>
+        <small>SHOPKEEPER</small>
+      </Link>
+      <nav aria-label="Shop navigation">
+        <Link to="/partner" className="active">
+          Orders
+        </Link>
+        <a href={PLAY_URL} target="_blank" rel="noreferrer">
+          Android app
+        </a>
+        <button className="text-button" onClick={() => signOut().then(() => navigate('/shop-login'))}>
+          Sign out
+        </button>
+      </nav>
+    </header>
+  );
+}
 
 export function Layout() {
   const { pathname } = useLocation();
-  const { session, profile } = useAuth();
+  const { session, profile, loading } = useAuth();
   const navigate = useNavigate();
   // Back from Google: finish on the page the student signed in from (checkout, an order…).
   useEffect(() => {
@@ -190,12 +216,29 @@ export function Layout() {
     // Only when the session first appears.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user.id]);
-  const notStudent = !!profile && !STUDENT_ROLES.has(profile.role);
+  const isShop = !!profile && SHOP_ROLES.has(profile.role);
+  const notStudent = !!profile && !STUDENT_ROLES.has(profile.role) && !isShop;
+  const onShopPage = pathname.startsWith('/partner');
   // Close the account menu and start at the top on every new page.
   useEffect(() => {
     document.querySelectorAll('details.account-menu[open]').forEach((d) => d.removeAttribute('open'));
     window.scrollTo(0, 0);
   }, [pathname]);
+  // Until we know who is signed in, don't send anyone anywhere.
+  if (loading && onShopPage) return <p className="app-main">Loading…</p>;
+  if (isShop) {
+    if (!onShopPage) return <Navigate to="/partner" replace />;
+    return (
+      <div className="management-app">
+        <ShopHeader />
+        <main className="app-main">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
+  if (onShopPage) return <Navigate to={session ? '/' : '/shop-login'} replace />;
+
   return (
     <div className="customer-app">
       <Navigation />
@@ -204,7 +247,7 @@ export function Layout() {
         <strong>CampusCart NITH</strong>
         <span>Campus shops at NIT Hamirpur, delivered to your hostel.</span>
         <span>
-          <Link to="/terms">Terms</Link> · Pay when you get it
+          <Link to="/terms">Terms</Link> · <Link to="/shop-login">Shop sign-in</Link> · Pay when you get it
         </span>
       </footer>
     </div>
