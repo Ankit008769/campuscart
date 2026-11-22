@@ -88,3 +88,38 @@ test('other topics and malformed filters are refused', async () => {
   assert.equal(await may(student, `orders:student_id=eq.not-a-uuid:a`), false, 'not a uuid');
   assert.equal(await may(student, `orders:student_id=eq.${student}:a:b`), false, 'extra parts');
 });
+
+// Live shops and menus (20261123100000_live_catalog.sql): any signed-in person, only catalog:<random>.
+const mayCatalog = (userId: string, topic: string) =>
+  as(db, userId, async () => (await db.query<{ ok: boolean }>('select public.can_watch_catalog_channel($1) as ok', [topic])).rows[0].ok);
+
+test('every signed-in person follows shop and menu changes, on catalog channels only', async () => {
+  assert.equal(await mayCatalog(student, 'catalog:k3x9'), true, 'a student');
+  assert.equal(await mayCatalog(owner, 'catalog:a1'), true, 'a shop');
+  assert.equal(await mayCatalog(rider, 'catalog:zz'), true, 'a rider');
+  assert.equal(await mayCatalog(student, 'catalog:'), false, 'no suffix');
+  assert.equal(await mayCatalog(student, 'catalog:a:b'), false, 'extra parts');
+  assert.equal(await mayCatalog(student, `orders:student_id=eq.${student}:a`), false, 'order lists have their own rule');
+  assert.equal(await mayCatalog(student, `track:${orderId}`), false, 'tracking channels have their own rule');
+  // Signed out (no user in the request): refused, and anon can't even call it.
+  await db.exec('set role anon');
+  try {
+    await assert.rejects(db.query(`select public.can_watch_catalog_channel('catalog:a1')`), /permission denied/);
+  } finally {
+    await db.exec('reset role');
+  }
+});
+
+// Admin → Students (20261123110000_admin_students.sql).
+test('only admins see the student list, with each student’s orders counted', async () => {
+  const rows = await as(db, admin, async () => (await db.query<{ email: string; orders: string }>('select email, orders from public.admin_list_students()')).rows);
+  const me = rows.find((r) => r.email === '23bme910@nith.ac.in');
+  assert.ok(me, 'the student is listed');
+  assert.equal(Number(me.orders) >= 1, true, 'their order is counted');
+  assert.equal(rows.some((r) => r.email === 'channels.shop@gmail.com'), false, 'shops are not students');
+  for (const who of [student, owner, rider]) {
+    await as(db, who, async () => {
+      await assert.rejects(db.query('select * from public.admin_list_students()'), /Only admins/);
+    });
+  }
+});

@@ -1,7 +1,7 @@
-import { formatPaise, listShopCatalog, setCategoryInStock, setStockCount, setVariantInStock } from '@campuscart/core';
+import { formatPaise, listShopCatalog, setCategoryInStock, setStockCount, setVariantInStock, watchCatalog } from '@campuscart/core';
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, SectionList, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -53,7 +53,19 @@ export default function CatalogScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Reload whenever the tab comes back into view, e.g. after saving in the item editor.
+  // Reload whenever the tab comes back into view, e.g. after saving in the item editor, and when
+  // stock or prices change on another phone or the website.
+  useEffect(
+    () =>
+      watchCatalog(supabase, () => {
+        loadCatalog().then(({ myShops, myShop, catalog }) => {
+          setShops(myShops);
+          setShop(myShop);
+          setItems(catalog);
+        }, () => {});
+      }),
+    [],
+  );
   useFocusEffect(
     useCallback(() => {
       let active = true;

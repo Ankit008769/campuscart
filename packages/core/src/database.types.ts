@@ -1825,6 +1825,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_students: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          email: string | null
+          phone: string | null
+          drop_point: string | null
+          room_note: string | null
+          joined_at: string
+          terms_accepted_at: string | null
+          blocked: boolean
+          deletion_requested: boolean
+          rider_status: string | null
+          orders: number
+          completed_orders: number
+          last_order_at: string | null
+        }[]
+      }
       accept_terms: {
         Args: { p_version: number }
         Returns: undefined
@@ -1958,6 +1977,10 @@ export type Database = {
           p_shop_id: string
           p_staff_role: Database["public"]["Enums"]["staff_role"]
         }
+        Returns: boolean
+      }
+      can_watch_catalog_channel: {
+        Args: { p_topic: string }
         Returns: boolean
       }
       can_watch_orders_channel: {

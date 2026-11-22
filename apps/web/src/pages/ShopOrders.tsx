@@ -6,6 +6,7 @@ import {
   printFileLink,
   removeOrderItems,
   transitionOrder,
+  watchCatalog,
   watchOrders,
   type OrderStatus,
 } from '@campuscart/core';
@@ -52,6 +53,14 @@ export function ShopOrders() {
   useEffect(() => {
     if (!userId) return;
     loadMyShops(userId).then(setShops, (e: unknown) => setError(messageOf(e, 'Could not load your shop.')));
+  }, [userId]);
+
+  // Open/closed set from the app or another browser shows here at once.
+  useEffect(() => {
+    if (!userId) return;
+    return watchCatalog(supabase, () => {
+      loadMyShops(userId).then(setShops, () => {});
+    });
   }, [userId]);
 
   const shopIds = shops?.map((s) => s.id).join(',') ?? '';
