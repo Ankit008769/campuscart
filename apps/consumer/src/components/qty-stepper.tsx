@@ -1,17 +1,21 @@
-import { Brand, Radius } from '@campuscart/ui';
+import { Brand, Storefront } from '@campuscart/ui';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-/** Blinkit-style ADD button that turns into − qty + once the item is in the cart. */
+import { Font } from '@/constants/theme';
+
+/** The website's ADD button that turns into − qty + once the item is in the cart. `compact` fits product cards. */
 export function QtyStepper({
   qty,
   disabled,
   onAdd,
   onRemove,
+  compact = false,
 }: {
   qty: number;
   disabled?: boolean;
   onAdd: () => void;
   onRemove: () => void;
+  compact?: boolean;
 }) {
   if (qty === 0) {
     return (
@@ -21,13 +25,13 @@ export function QtyStepper({
         disabled={disabled}
         onPress={onAdd}
         hitSlop={8}
-        style={({ pressed }) => [styles.add, disabled && styles.disabled, pressed && styles.pressed]}>
+        style={({ pressed }) => [styles.add, compact && styles.compact, disabled && styles.disabled, pressed && styles.pressed]}>
         <Text style={styles.addText}>ADD</Text>
       </Pressable>
     );
   }
   return (
-    <View style={styles.stepper}>
+    <View style={[styles.stepper, compact && styles.compact]}>
       <Pressable accessibilityRole="button" accessibilityLabel="Remove one" onPress={onRemove} hitSlop={12}>
         <Text style={styles.stepText}>−</Text>
       </Pressable>
@@ -47,16 +51,22 @@ const styles = StyleSheet.create({
     minWidth: 76,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Brand.green,
-    borderRadius: Radius.small,
-    paddingHorizontal: 18,
-    backgroundColor: '#ffffff',
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    backgroundColor: Storefront.addFill,
+  },
+  compact: {
+    minHeight: 32,
+    minWidth: 64,
+    paddingHorizontal: 10,
   },
   addText: {
     color: Brand.green,
-    fontWeight: 600,
-    fontSize: 14,
+    fontFamily: Font.bold,
+    fontSize: 12,
+    letterSpacing: 0.3,
   },
   disabled: {
     opacity: 0.4,
@@ -67,14 +77,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
     backgroundColor: Brand.green,
-    borderRadius: Radius.small,
-    paddingHorizontal: 12,
+    borderRadius: 6,
+    paddingHorizontal: 10,
   },
   stepText: {
     color: '#ffffff',
-    fontWeight: 600,
+    fontFamily: Font.bold,
     fontSize: 16,
   },
   pressed: {
@@ -82,8 +92,8 @@ const styles = StyleSheet.create({
   },
   qty: {
     color: '#ffffff',
-    fontWeight: 600,
-    fontSize: 14,
+    fontFamily: Font.bold,
+    fontSize: 13,
     minWidth: 16,
     textAlign: 'center',
   },
