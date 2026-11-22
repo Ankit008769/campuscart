@@ -50,6 +50,8 @@ export function Checkout() {
   }, [profile?.room_note]);
 
   const itemsKey = JSON.stringify(cart.items());
+  // A coupon is checked against the bag it was applied to; changing the bag means applying it again.
+  useEffect(() => setCoupon(null), [itemsKey, mode]);
   useEffect(() => {
     if (!cart.count) return;
     let active = true;

@@ -1,4 +1,5 @@
 import {
+  ACCEPT_WINDOW_MS,
   ORDER_STATUS_LABEL,
   formatPaise,
   getOrder,
@@ -30,7 +31,7 @@ function PlacedNote() {
     <div className="notice">
       <strong>Order placed.</strong>
       <p>
-        The shop has 7 minutes to accept it. This page updates by itself. For a notification when it’s accepted or ready, get the{' '}
+        The shop has {ACCEPT_WINDOW_MS / 60000} minutes to accept it. This page updates by itself. For a notification when it’s accepted or ready, get the{' '}
         <a href={PLAY_URL} target="_blank" rel="noreferrer">
           Android app
         </a>
