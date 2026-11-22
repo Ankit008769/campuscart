@@ -29,7 +29,7 @@ export const TERMS: TermsSection[] = [
     title: '1. About these terms',
     for: 'everyone',
     points: [
-      'Campus Cart NITH (“Campus Cart”, “we”, “us”) is an app run by Ronak Dotasara for the NIT Hamirpur campus. It lets students order from shops on campus and lets those shops take and manage orders.',
+      'Campus Cart NITH (“Campus Cart”, “we”, “us”) is an app run by Ronak Dotasara and Ankit Bhukar for the NIT Hamirpur campus. It lets students order from shops on campus and lets those shops take and manage orders.',
       'These terms are an agreement between you and us. By ticking “I agree” or by using the app, you accept them. If you don’t agree, please don’t use the app.',
       'Our Privacy Policy explains what information we collect and why. It is part of these terms.',
       'We may update these terms as the app grows. When the change matters, the app will ask you to agree again before you continue.',
