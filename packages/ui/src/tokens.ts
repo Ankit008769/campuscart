@@ -7,12 +7,36 @@
 export const Brand = {
   yellow: '#FFD23F',
   yellowSoft: '#FFF6D6',
-  green: '#13793A',
-  greenSoft: '#E3F5EA',
+  // The website's quick-commerce green (4.9:1 on white, so it also works as text).
+  green: '#0C831F',
+  greenSoft: '#EDF8E8',
   red: '#C62828',
   redSoft: '#FBE7E7',
   ink: '#1C1C1C',
   inkSoft: '#5F6368',
+} as const;
+
+/**
+ * The storefront look shared with the website (apps/web, from the earlier MERN site): the
+ * yellow-and-green wordmark, the light-green hero, the pastel promo cards and card lines.
+ */
+export const Storefront = {
+  wordYellow: '#E5B814',
+  wordGreen: '#29872E',
+  hero: '#C3E29F',
+  heroInk: '#244826',
+  heroText: '#3F6533',
+  bag: '#F6CE48',
+  bagHandle: '#D8AD2A',
+  mint: '#D7EFF0',
+  lemon: '#FFF0AF',
+  lilac: '#E7DFF6',
+  line: '#E8E8E8',
+  search: '#F7F7F7',
+  searchLine: '#EBEBEB',
+  chipLine: '#E0E7DF',
+  addFill: '#F7FFF9',
+  chip: '#F5F5F5',
 } as const;
 
 export const Radius = {

@@ -10,8 +10,9 @@ import {
   parseShopHours,
   setFavourite,
   setStockAlert,
+  watchCatalog,
 } from '@campuscart/core';
-import { Brand, Radius, StatusBadge } from '@campuscart/ui';
+import { Brand, Radius, StatusBadge, Storefront } from '@campuscart/ui';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, SectionList, StyleSheet, View } from 'react-native';
@@ -25,7 +26,7 @@ import { QtyStepper } from '@/components/qty-stepper';
 import { SkeletonList } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Font, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { readCache, writeCache } from '@/lib/cache';
@@ -85,10 +86,14 @@ export default function ShopScreen() {
     save(on).catch(() => update(set));
   }
 
+  // The shop opening or closing, or changing a price or stock, reloads the menu at once.
+  const [version, setVersion] = useState(0);
+  useEffect(() => watchCatalog(supabase, () => setVersion((v) => v + 1), { shopId: id }), [id]);
+
   useEffect(() => {
     let active = true;
     let fresh = false;
-    logStep('shop_view', id);
+    if (version === 0) logStep('shop_view', id);
     // The last copy of this menu draws at once; the live one replaces it a moment later.
     readCache<Menu>(`menu:${id}`, 24 * 60 * 60 * 1000).then((cached) => {
       if (active && !fresh && cached) setMenu(cached);
@@ -104,7 +109,7 @@ export default function ShopScreen() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, version]);
 
   if (error && !menu) {
     return (
@@ -145,7 +150,7 @@ export default function ShopScreen() {
         stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.content}
         ListHeaderComponent={
-          <ThemedView type="backgroundElement" style={styles.card}>
+          <View style={styles.card}>
             <View style={styles.row}>
               <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
                 {shop.kind}
@@ -170,7 +175,7 @@ export default function ShopScreen() {
               </View>
             )}
             {shop.does_delivery && <OrderTogether shopId={shop.id} />}
-          </ThemedView>
+          </View>
         }
         renderSectionHeader={({ section }) => (
           <ThemedText type="section" accessibilityRole="header" style={styles.sectionTitle}>
@@ -221,7 +226,7 @@ function ProductRow({
   }
 
   return (
-    <ThemedView type="backgroundElement" style={[styles.product, !available && styles.unavailable]}>
+    <View style={[styles.product, !available && styles.unavailable]}>
       {product.image_path ? (
         <ProductImage path={product.image_path} style={styles.photo} label={product.name} />
       ) : (
@@ -229,7 +234,7 @@ function ProductRow({
       )}
       <View style={styles.details}>
         <View style={styles.row}>
-          <ThemedText type="smallBold" style={styles.flex}>
+          <ThemedText type="smallBold" style={[styles.flex, styles.productName]}>
             {product.name}
           </ThemedText>
           {product.is_veg === false && <StatusBadge label="Non-veg" tone="bad" />}
@@ -276,7 +281,7 @@ function ProductRow({
         )}
         {!available && <StatusBadge label="Out of stock" tone="bad" />}
       </View>
-    </ThemedView>
+    </View>
   );
 }
 
@@ -369,10 +374,14 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     marginTop: Spacing.one,
   },
+  // The website's notice panel: soft green with a thin line.
   card: {
     borderRadius: Radius.medium,
     padding: Spacing.three,
     gap: Spacing.one,
+    backgroundColor: '#F5FBF4',
+    borderWidth: 1,
+    borderColor: '#E6EFE4',
   },
   row: {
     flexDirection: 'row',
@@ -386,21 +395,30 @@ const styles = StyleSheet.create({
     marginTop: Spacing.four,
     marginBottom: Spacing.one,
   },
+  // The website's product card: white, thin line, photo on white.
   product: {
     flexDirection: 'row',
     gap: Spacing.three,
-    borderRadius: Radius.medium,
-    padding: Spacing.two,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: Storefront.line,
+    backgroundColor: '#ffffff',
+    padding: 10,
     marginBottom: Spacing.two,
+  },
+  productName: {
+    fontFamily: Font.bold,
+    fontSize: 14,
+    color: '#202020',
   },
   unavailable: {
     opacity: 0.5,
   },
   photo: {
-    width: 76,
-    height: 76,
-    borderRadius: Radius.small,
-    backgroundColor: '#00000011',
+    width: 84,
+    height: 84,
+    borderRadius: 6,
+    backgroundColor: '#F5F6F2',
   },
   details: {
     flex: 1,

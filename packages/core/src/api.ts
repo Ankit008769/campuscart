@@ -365,6 +365,20 @@ export async function listShopOrders(client: CampusClient, shopIds: string | rea
 }
 
 /**
+ * For a channel's subscribe callback: reload once each time the channel joins again after the first
+ * time. Changes made while a phone was offline, asleep or reconnecting never arrive as events, so the
+ * screen asks the database again as soon as it is back.
+ */
+function reloadOnRejoin(reload: () => void) {
+  let joined = false;
+  return (status: string) => {
+    if (status !== 'SUBSCRIBED') return;
+    if (joined) reload();
+    joined = true;
+  };
+}
+
+/**
  * Calls onChange whenever an order matching `filter` (a Realtime filter on student_id, rider_id,
  * shop_id, cart_id or id, such as `shop_id=eq.<id>`, or null for the admin board's every order) is
  * created or changes. The channel is private: can_watch_orders_channel lets each person join only
@@ -377,8 +391,37 @@ export function watchOrders(client: CampusClient, filter: string | null, onChang
     .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', ...(filter ? { filter } : {}) }, () =>
       onChange(),
     )
-    .subscribe();
+    .subscribe(reloadOnRejoin(onChange));
   return () => {
     client.removeChannel(channel);
   };
 }
+
+/**
+ * Calls onChange (at most a few times a second) whenever a shop opens or closes or changes its
+ * details, or a menu item, price or stock level changes, so screens update without a refresh.
+ * Pass shopId to hear only that shop (its items' sizes still come for every shop, as variants carry
+ * no shop id). The channel is private: can_watch_catalog_channel lets any signed-in person join, and
+ * each changed row reaches them only through the tables' read policies. Returns an unsubscribe.
+ */
+export function watchCatalog(client: CampusClient, onChange: () => void, options: { shopId?: string } = {}): () => void {
+  const suffix = Math.random().toString(36).slice(2) || '0';
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // A shop editing several items at once sends a burst of changes: reload once, shortly after.
+  const changed = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(onChange, 300);
+  };
+  const { shopId } = options;
+  const channel = client
+    .channel(`catalog:${suffix}`, { config: { private: true } })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shops', ...(shopId ? { filter: `id=eq.${shopId}` } : {}) }, changed)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'products', ...(shopId ? { filter: `shop_id=eq.${shopId}` } : {}) }, changed)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'variants' }, changed)
+    .subscribe(reloadOnRejoin(changed));
+  return () => {
+    if (timer) clearTimeout(timer);
+    client.removeChannel(channel);
+  };
+}
+

@@ -1,4 +1,4 @@
-import { formatPaise, logSearch, searchCatalog } from '@campuscart/core';
+import { formatPaise, logSearch, searchCatalog, watchCatalog } from '@campuscart/core';
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -34,6 +34,10 @@ export default function SearchScreen() {
   const key = `${categoryId ?? ''}|${trimmed.toLowerCase()}`;
   const wantsResults = !!categoryId || trimmed.length >= 2;
 
+  // Prices, stock and open shops change while the student looks: search again when they do.
+  const [version, setVersion] = useState(0);
+  useEffect(() => watchCatalog(supabase, () => setVersion((v) => v + 1)), []);
+
   useEffect(() => {
     if (!wantsResults) return;
     let active = true;
@@ -44,7 +48,7 @@ export default function SearchScreen() {
           setResults({ key, hits });
           setError(null);
           // What was searched and how much came back (not who), for the missed-demand report.
-          if (trimmed.length >= 2) void logSearch(supabase, trimmed, hits.length);
+          if (trimmed.length >= 2 && version === 0) void logSearch(supabase, trimmed, hits.length);
         },
         (e: unknown) => active && setError(e instanceof Error ? e.message : 'Search failed.'),
       );
@@ -53,7 +57,7 @@ export default function SearchScreen() {
       active = false;
       clearTimeout(timer);
     };
-  }, [key, trimmed, categoryId, wantsResults]);
+  }, [key, trimmed, categoryId, wantsResults, version]);
 
   const current = results?.key === key ? results.hits : null;
   const searching = wantsResults && !current && !error;

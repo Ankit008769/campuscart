@@ -5,6 +5,7 @@ import {
   loginIdOf,
   printFileLink,
   transitionOrder,
+  watchCatalog,
   watchOrders,
   type OrderStatus,
 } from '@campuscart/core';
@@ -60,6 +61,15 @@ export default function OrdersScreen() {
       active = false;
     };
   }, []);
+
+  // Open/closed set from another phone or the website shows here at once.
+  useEffect(
+    () =>
+      watchCatalog(supabase, () => {
+        loadMyShops().then(setShops, () => {});
+      }),
+    [],
+  );
 
   // Live orders from every outlet: reload on any change. New orders ring through useNewOrderAlarm.
   const shopIds = shops?.map((s) => s.id).join(',') ?? '';

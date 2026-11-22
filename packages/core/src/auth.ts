@@ -82,3 +82,22 @@ export async function signInWithGoogle(
   }
   return true;
 }
+
+/**
+ * Google sign-in for the website: the page itself goes to Google and comes back to `redirectTo` with
+ * a PKCE code, which completeSignInFromUrl exchanges when the page loads again. Phones use
+ * signInWithGoogle instead, which keeps the app open behind a browser tab.
+ */
+export async function startGoogleSignInRedirect(
+  client: CampusClient,
+  options: { redirectTo: string; hostedDomain?: string },
+): Promise<void> {
+  const { error } = await client.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: options.redirectTo,
+      queryParams: { prompt: 'select_account', ...(options.hostedDomain ? { hd: options.hostedDomain } : {}) },
+    },
+  });
+  if (error) throw error;
+}

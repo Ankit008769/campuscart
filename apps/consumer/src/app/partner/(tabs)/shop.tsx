@@ -8,6 +8,7 @@ import {
   setRush,
   shopReport,
   shopTopItems,
+  watchCatalog,
 } from '@campuscart/core';
 import { Brand, Radius } from '@campuscart/ui';
 import { useFocusEffect } from 'expo-router';
@@ -50,6 +51,8 @@ export default function ShopScreen() {
     chooseOutlet(next.id);
   }
   useFocusEffect(reload);
+  // Changes made on another phone or the website (open/closed, rush, hours) show at once.
+  useEffect(() => watchCatalog(supabase, reload), [reload]);
 
   async function rush(minutes: number | null) {
     if (!shop) return;

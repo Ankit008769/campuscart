@@ -1,0 +1,42 @@
+/* Small additions on top of the old site's stylesheets (base.css, quick-commerce.css), for parts
+   the Campus Cart site has that the old one didn't: sizes, order steps, delivery/pickup choice. */
+.customer-app .variant-select { margin: 6px 0 0; padding: 6px 8px; font-size: 11px; border-radius: 6px; }
+.choice-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 4px; }
+.choice-row button { flex: 1; min-width: 140px; }
+.coupon-row { display: flex; gap: 10px; align-items: center; }
+.coupon-row input { flex: 1; margin-top: 7px; }
+.coupon-row button { margin-top: 7px; }
+.order-row { display: block; color: inherit; }
+.order-row:hover { box-shadow: 0 8px 20px #294a3410; }
+.order-steps { list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 10px; }
+.order-steps li { position: relative; padding-left: 26px; color: var(--muted); font-size: 14px; }
+.order-steps li::before { content: ''; position: absolute; left: 0; top: 4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--green); }
+.order-steps li.done { color: var(--ink); font-weight: 700; }
+.order-steps li.done::before { background: var(--green); }
+.variant-buy { display: flex; align-items: center; gap: 12px; }
+.terms-tick { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; }
+.terms-tick input { width: auto; margin: 3px 0 0; }
+.terms-summary { font-size: 12px; padding-left: 18px; line-height: 1.6; }
+.terms-page { max-width: 820px; margin: 0 auto; }
+.terms-page li { line-height: 1.6; margin: 6px 0; }
+/* The old stylesheet gives every div in a cart row flex:1, which stretched the quantity buttons. */
+.cart-row > .quantity-control { flex: 0 0 96px; }
+
+/* The shop's Orders board (pages/ShopOrders.tsx), on the old site's staff styles. */
+.shop-board { max-width: 900px; margin: 0 auto; }
+.sound-button { width: 100%; margin: 0 0 14px; background: #fff1cf; color: #6b5212; border: 1px solid #f0dc9c; }
+.sound-button:hover { background: #ffe8a8; }
+.alarm-banner { width: 100%; flex-direction: column; align-items: flex-start; gap: 4px; margin: 0 0 18px; background: #c62828; text-align: left; }
+.alarm-banner:hover { background: #a91f1f; }
+.alarm-banner span { font-weight: 500; font-size: 13px; }
+.open-panel { display: grid; gap: 12px; padding: 18px 22px; margin-bottom: 18px; }
+.open-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; font-size: 14px; }
+.open-row input { width: 44px; height: 24px; margin: 0; accent-color: var(--green); }
+.board-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.board-tabs button { padding: 10px 18px; }
+.button-row button.danger, .secondary.danger { color: #b24b3b; border-color: #f0d2cb; }
+.text-button.danger { color: #b24b3b; }
+.tick-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-weight: 500; }
+.tick-row input { width: auto; margin: 0; }
+.code-input { width: 200px; margin: 0; }
+.management-app .site-header nav button { padding: 5px; }

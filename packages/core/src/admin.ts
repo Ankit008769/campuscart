@@ -509,3 +509,10 @@ export async function removeFromCollection(client: CampusClient, collectionId: s
   const { error } = await client.from('collection_items').delete().eq('collection_id', collectionId).eq('master_product_id', masterProductId);
   if (error) throw error;
 }
+
+/** Admin → Students: everyone who signed in as a student, newest first, with their order counts. */
+export async function listStudentsForAdmin(client: CampusClient) {
+  const { data, error } = await client.rpc('admin_list_students');
+  if (error) throw error;
+  return data;
+}

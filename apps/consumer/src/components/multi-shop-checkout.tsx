@@ -9,6 +9,7 @@ import {
   placeCart,
   previewCart,
   routeCart,
+  watchCatalog,
   type CartRoute,
   type FeeRules,
   type OrderMode,
@@ -81,6 +82,9 @@ export function MultiShopCheckout() {
 
   // Ask the database where each line would go, whenever the cart, mode or drop point changes.
   const itemsKey = JSON.stringify(cart.items());
+  // A shop closing or an item selling out while the student checks out shows at once.
+  const [version, setVersion] = useState(0);
+  useEffect(() => watchCatalog(supabase, () => setVersion((v) => v + 1)), []);
   useEffect(() => {
     let active = true;
     routeCart(supabase, JSON.parse(itemsKey), mode, mode === 'delivery' ? dropPointId : null).then(
@@ -90,7 +94,7 @@ export function MultiShopCheckout() {
     return () => {
       active = false;
     };
-  }, [itemsKey, mode, dropPointId]);
+  }, [itemsKey, mode, dropPointId, version]);
 
   const preview = routes ? previewCart(routes, mode, rules) : null;
   const primary = preview?.shops[0];

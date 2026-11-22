@@ -1,3 +1,10 @@
+import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
+import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
+import { DMSans_600SemiBold } from '@expo-google-fonts/dm-sans/600SemiBold';
+import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
+import { Manrope_700Bold } from '@expo-google-fonts/manrope/700Bold';
+import { Manrope_800ExtraBold } from '@expo-google-fonts/manrope/800ExtraBold';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -30,14 +37,26 @@ export default function RootLayout() {
   );
 }
 
+// The website's fonts (constants/theme.ts Font). If they fail to load, the system font is used.
+const FONTS = {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+};
+
 function RootNavigator() {
   const { session, side, needsAdminCode, loading } = useAuth();
+  const [fontsLoaded, fontError] = useFonts(FONTS);
+  const ready = !loading && (fontsLoaded || !!fontError);
   const updateRequired = useUpdateRequired();
   const userId = session?.user.id;
 
   useEffect(() => {
-    if (!loading) SplashScreen.hideAsync();
-  }, [loading]);
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
 
   useEffect(() => {
     if (!userId || !side || side === 'admin') return;
