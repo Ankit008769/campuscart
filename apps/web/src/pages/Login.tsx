@@ -80,7 +80,9 @@ export function Login() {
             {failed || error}
           </p>
         )}
-        <p className="muted">Run a shop? Take orders in the Campus Cart Android app, which rings for every new order.</p>
+        <p className="muted">
+          Run a shop? <Link to="/shop-login">Sign in with your shop ID</Link>
+        </p>
       </div>
     </section>
   );

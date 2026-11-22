@@ -17,6 +17,8 @@ import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { OrderPage, Orders } from './pages/Orders';
 import { Shop } from './pages/Shop';
+import { ShopLogin } from './pages/ShopLogin';
+import { ShopOrders } from './pages/ShopOrders';
 
 const router = createBrowserRouter([
   {
@@ -33,6 +35,8 @@ const router = createBrowserRouter([
       { path: '/profile', element: <Profile /> },
       { path: '/login', element: <Login /> },
       { path: '/terms', element: <Terms /> },
+      { path: '/shop-login', element: <ShopLogin /> },
+      { path: '/partner', element: <ShopOrders /> },
       {
         path: '*',
         element: (
