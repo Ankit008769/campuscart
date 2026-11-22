@@ -69,6 +69,12 @@ export default function AdminShopsScreen() {
             Each shop&apos;s orders this month and the ₹4 platform fee to collect.
           </ThemedText>
         </Card>
+        <Card accessibilityLabel="Students" onPress={() => router.push('/admin/students')}>
+          <ThemedText type="smallBold">Students</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Who has signed up: name, email, phone, hostel and how often they order.
+          </ThemedText>
+        </Card>
         <Card accessibilityLabel="Suggestions" onPress={() => router.push('/admin/suggestions')}>
           <ThemedText type="smallBold">Suggestions</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">

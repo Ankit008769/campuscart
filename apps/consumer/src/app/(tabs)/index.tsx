@@ -11,6 +11,7 @@ import {
   listDropPoints,
   listShops,
   myBanners,
+  watchCatalog,
 } from '@campuscart/core';
 import { Brand, Radius, Storefront } from '@campuscart/ui';
 import { router } from 'expo-router';
@@ -165,6 +166,9 @@ export default function HomeScreen() {
       active = false;
     };
   }, [cacheKey, show, fetchAndKeep]);
+
+  // A shop opening or closing, or a price or stock change, shows here at once.
+  useEffect(() => watchCatalog(supabase, () => void load()), [load]);
 
   // Where orders usually go, for the header (as the website shows it).
   useEffect(() => {

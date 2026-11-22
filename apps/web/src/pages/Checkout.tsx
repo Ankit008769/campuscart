@@ -31,7 +31,7 @@ const messageOf = (e: unknown) => (e instanceof Error ? e.message : 'Something w
 export function Checkout() {
   const cart = useCart();
   const { session, profile, reloadProfile } = useAuth();
-  const { rules } = useCatalog();
+  const { rules, liveVersion } = useCatalog();
   const { dropPoints, dropPointId, setDropPointId } = useDropPoint();
   const navigate = useNavigate();
 
@@ -63,7 +63,7 @@ export function Checkout() {
     return () => {
       active = false;
     };
-  }, [itemsKey, mode, dropPointId, cart.count]);
+  }, [itemsKey, mode, dropPointId, cart.count, liveVersion]);
 
   if (!session) return <Navigate to="/login?redirect=/checkout" replace />;
   if (!cart.count && !placing) return <Navigate to="/cart" replace />;

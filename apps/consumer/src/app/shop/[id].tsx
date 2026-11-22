@@ -10,6 +10,7 @@ import {
   parseShopHours,
   setFavourite,
   setStockAlert,
+  watchCatalog,
 } from '@campuscart/core';
 import { Brand, Radius, StatusBadge, Storefront } from '@campuscart/ui';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
@@ -85,10 +86,14 @@ export default function ShopScreen() {
     save(on).catch(() => update(set));
   }
 
+  // The shop opening or closing, or changing a price or stock, reloads the menu at once.
+  const [version, setVersion] = useState(0);
+  useEffect(() => watchCatalog(supabase, () => setVersion((v) => v + 1), { shopId: id }), [id]);
+
   useEffect(() => {
     let active = true;
     let fresh = false;
-    logStep('shop_view', id);
+    if (version === 0) logStep('shop_view', id);
     // The last copy of this menu draws at once; the live one replaces it a moment later.
     readCache<Menu>(`menu:${id}`, 24 * 60 * 60 * 1000).then((cached) => {
       if (active && !fresh && cached) setMenu(cached);
@@ -104,7 +109,7 @@ export default function ShopScreen() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, version]);
 
   if (error && !menu) {
     return (

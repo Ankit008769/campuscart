@@ -9,9 +9,10 @@ import {
   productPhotoUrl,
   setFavourite,
   setStockAlert,
+  watchCatalog,
   type FeeRules,
 } from '@campuscart/core';
-import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { useAuth } from './auth';
 import { SUPABASE_URL, supabase } from './supabase';
@@ -44,6 +45,8 @@ type Catalog = {
   loading: boolean;
   error: string | null;
   reload: () => void;
+  /** Goes up each time a shop or menu changes live, so screens that ask the database again (checkout) can. */
+  liveVersion: number;
   favourites: Set<string>;
   toggleFavourite: (productId: string) => Promise<void>;
   alerts: Set<string>;
@@ -78,6 +81,17 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  // Live changes (a shop opening, an item selling out) reload quietly, without the loading state.
+  const [liveVersion, setLiveVersion] = useState(0);
+  const quiet = useRef(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    return watchCatalog(supabase, () => {
+      quiet.current = true;
+      setLiveVersion((v) => v + 1);
+    });
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) {
@@ -87,7 +101,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       return;
     }
     let active = true;
-    setLoading(true);
+    if (!quiet.current) setLoading(true);
+    quiet.current = false;
     setError(null);
     (async () => {
       try {
@@ -132,7 +147,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [userId, version]);
+  }, [userId, version, liveVersion]);
 
   const toggleFavourite = useCallback(
     async (productId: string) => {
@@ -171,12 +186,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       reload: () => setVersion((v) => v + 1),
+      liveVersion,
       favourites,
       toggleFavourite,
       alerts,
       toggleAlert,
     }),
-    [shops, rules, products, ratings, loading, error, favourites, toggleFavourite, alerts, toggleAlert],
+    [shops, rules, products, ratings, loading, error, liveVersion, favourites, toggleFavourite, alerts, toggleAlert],
   );
   return <CatalogContext value={value}>{children}</CatalogContext>;
 }
