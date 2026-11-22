@@ -52,8 +52,12 @@ type Catalog = {
 
 const CatalogContext = createContext<Catalog | null>(null);
 
+// Where product photos are served from: the project's public storage. Overridable for a local copy
+// of the menus whose photo files live only on the live project.
+const PHOTO_BASE = (import.meta.env.VITE_PHOTO_BASE_URL as string | undefined) || SUPABASE_URL;
+
 export const photoUrl = (path: string | null, size: 'full' | 'thumb' = 'thumb') =>
-  path && SUPABASE_URL ? productPhotoUrl(SUPABASE_URL, path, size) : '/product-placeholder.svg';
+  path && PHOTO_BASE ? productPhotoUrl(PHOTO_BASE, path, size) : '/product-placeholder.svg';
 
 /** A product is orderable when its shop is open and one of its sizes is in stock. */
 export const orderable = (p: Product) => p.shop.is_open && p.variants.some((v) => v.inStock);

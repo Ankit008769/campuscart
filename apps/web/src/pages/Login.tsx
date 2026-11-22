@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 
 import { rememberTermsTicked, useAuth } from '../lib/auth';
+import { rememberAfterLogin, safePath } from '../lib/redirect';
 
 export function Login() {
   const { session, signIn, error } = useAuth();
@@ -12,7 +13,8 @@ export function Login() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
 
-  if (session) return <Navigate to={params.get('redirect') || '/'} replace />;
+  const next = safePath(params.get('redirect')) ?? '/';
+  if (session) return <Navigate to={next} replace />;
 
   async function go(anyAccount: boolean) {
     if (!agreed) {
@@ -22,6 +24,7 @@ export function Login() {
     setBusy(true);
     setFailed(null);
     rememberTermsTicked();
+    rememberAfterLogin(next);
     try {
       // The page leaves for Google here and comes back signed in.
       await signIn({ anyAccount });
@@ -36,7 +39,7 @@ export function Login() {
       <div className="auth-story">
         <span className="eyebrow">CAMPUS CART NITH</span>
         <h1>Your campus shops, one sign-in away.</h1>
-        <p>Order from Jai Santoshi Maa, Nescafé and more. Delivered to your hostel or picked up, and paid when you get it.</p>
+        <p>Order from the shops on campus. Delivered to your hostel or picked up, and paid when you get it.</p>
         <div className="story-orbit">
           cc<span>NIT HAMIRPUR</span>
         </div>

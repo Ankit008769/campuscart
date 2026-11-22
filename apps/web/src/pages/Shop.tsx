@@ -87,7 +87,7 @@ export function Shop({ embedded = false }: { embedded?: boolean }) {
   const search = embedded ? '' : (params.get('q') ?? '');
   const shop = embedded ? '' : (params.get('shop') ?? '');
   const category = embedded ? '' : (params.get('category') ?? '');
-  const sort = embedded ? 'popular' : (params.get('sort') ?? 'popular');
+  const sort = embedded ? 'az' : (params.get('sort') ?? 'az');
   const update = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
@@ -172,8 +172,8 @@ export function Shop({ embedded = false }: { embedded?: boolean }) {
               </>
             )}
           </p>
-          <select aria-label="Sort products" value={sort} onChange={(e) => update('sort', e.target.value === 'popular' ? '' : e.target.value)}>
-            <option value="popular">A to Z</option>
+          <select aria-label="Sort products" value={sort} onChange={(e) => update('sort', e.target.value === 'az' ? '' : e.target.value)}>
+            <option value="az">A to Z</option>
             <option value="low">Price: low to high</option>
             <option value="high">Price: high to low</option>
           </select>

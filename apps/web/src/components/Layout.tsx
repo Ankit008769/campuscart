@@ -6,6 +6,7 @@ import { CartDrawer } from './CartDrawer';
 import { useAuth } from '../lib/auth';
 import { useCart } from '../lib/cart';
 import { groupedDropPoints, useDropPoint } from '../lib/location';
+import { takeAfterLogin } from '../lib/redirect';
 
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.campuscart.student';
 
@@ -156,8 +157,40 @@ function Navigation() {
   );
 }
 
+/** Shops take orders in the Android app and admins use the admin site; this website is for students. */
+function NotForStudents() {
+  const { signOut } = useAuth();
+  return (
+    <div className="empty-state">
+      <h2>This website is for students</h2>
+      <p>Shops take orders in the Campus Cart Android app, which rings for every new order. Admins use the admin website.</p>
+      <p>
+        <a className="button" href={PLAY_URL} target="_blank" rel="noreferrer">
+          Get the Android app
+        </a>
+      </p>
+      <button className="secondary" onClick={() => signOut()}>
+        Sign out
+      </button>
+    </div>
+  );
+}
+
+const STUDENT_ROLES = new Set(['student', 'rider']);
+
 export function Layout() {
   const { pathname } = useLocation();
+  const { session, profile } = useAuth();
+  const navigate = useNavigate();
+  // Back from Google: finish on the page the student signed in from (checkout, an order…).
+  useEffect(() => {
+    if (!session) return;
+    const next = takeAfterLogin();
+    if (next && next !== pathname) navigate(next, { replace: true });
+    // Only when the session first appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user.id]);
+  const notStudent = !!profile && !STUDENT_ROLES.has(profile.role);
   // Close the account menu and start at the top on every new page.
   useEffect(() => {
     document.querySelectorAll('details.account-menu[open]').forEach((d) => d.removeAttribute('open'));
@@ -166,9 +199,7 @@ export function Layout() {
   return (
     <div className="customer-app">
       <Navigation />
-      <main className="app-main">
-        <Outlet />
-      </main>
+      <main className="app-main">{notStudent ? <NotForStudents /> : <Outlet />}</main>
       <footer className="site-footer">
         <strong>CampusCart NITH</strong>
         <span>Campus shops at NIT Hamirpur, delivered to your hostel.</span>
