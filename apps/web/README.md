@@ -20,16 +20,21 @@ npm run web                                     # http://localhost:5173
 
 ## Build and host
 
+Live at **https://campuscart-nith.web.app** (Firebase Hosting, site `campuscart-nith` in the
+Campus Cart Firebase project, free Spark plan). To deploy a new version:
+
 ```bash
-npm run build -w @campuscart/web                # plain files in apps/web/dist
+cd apps/web
+VITE_SUPABASE_URL=https://pclighjvsijnedapngwg.supabase.co VITE_SUPABASE_KEY=sb_publishable_... npm run build
+npx firebase-tools@15.37.0 deploy --only hosting
 ```
 
-Any static host works; `firebase.json` is set up for Firebase Hosting (free Spark plan), with every
-path served `index.html` so links like `/order/<id>` open directly.
+Pass the live values on the command line (or in `.env.production.local`), because `.env.local`
+points at the local stack. Every path serves `index.html` (see `firebase.json`), so links like
+`/order/<id>` open directly.
 
-Before the first real sign-in on a new address, add it in Supabase → Authentication → URL
-Configuration → Redirect URLs (for example `https://<site>/`), or Google sign-in will refuse to
-come back to it.
+Google sign-in only comes back to addresses listed in Supabase → Authentication → URL
+Configuration → Redirect URLs; `https://campuscart-nith.web.app/` must be there.
 
 ## What's not here (yet)
 
