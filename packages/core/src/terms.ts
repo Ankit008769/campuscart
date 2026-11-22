@@ -5,8 +5,8 @@ import type { CampusClient } from './api';
  * changes: everyone is then asked once more to agree (accept_terms records the version and time).
  */
 export const TERMS_VERSION = 1;
-export const TERMS_UPDATED = '21 November 2026';
-export const SUPPORT_EMAIL = 'admincampuscartnith@gmail.com';
+export const TERMS_UPDATED = '22 November 2026';
+export const SUPPORT_EMAIL = 'ronakdotasara05@gmail.com';
 export const PRIVACY_POLICY_URL = 'https://sites.google.com/dotasaraagrotech.in/campus-cart-nith';
 
 export type TermsSection = {
@@ -29,7 +29,7 @@ export const TERMS: TermsSection[] = [
     title: '1. About these terms',
     for: 'everyone',
     points: [
-      'Campus Cart NITH (“Campus Cart”, “we”, “us”) is an app run by Dotasara Agrotech for the NIT Hamirpur campus. It lets students order from shops on campus and lets those shops take and manage orders.',
+      'Campus Cart NITH (“Campus Cart”, “we”, “us”) is an app run by Ronak Dotasara for the NIT Hamirpur campus. It lets students order from shops on campus and lets those shops take and manage orders.',
       'These terms are an agreement between you and us. By ticking “I agree” or by using the app, you accept them. If you don’t agree, please don’t use the app.',
       'Our Privacy Policy explains what information we collect and why. It is part of these terms.',
       'We may update these terms as the app grows. When the change matters, the app will ask you to agree again before you continue.',
@@ -152,7 +152,7 @@ export const TERMS: TermsSection[] = [
     for: 'everyone',
     points: [
       'For anything about the app, write to ' + SUPPORT_EMAIL + '. You can also send ideas from Account → Suggestions.',
-      'Grievance officer: Ronak Dotasara, Dotasara Agrotech, ' + SUPPORT_EMAIL + '. We will acknowledge a complaint within 48 hours and try to resolve it within 30 days.',
+      'Grievance officer: Ronak Dotasara, ' + SUPPORT_EMAIL + '. We will acknowledge a complaint within 48 hours and try to resolve it within 30 days.',
       'These terms follow the laws of India. Any dispute that can’t be settled by talking it through will be heard by the courts at Hamirpur, Himachal Pradesh.',
     ],
   },

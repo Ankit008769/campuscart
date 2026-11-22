@@ -1,6 +1,6 @@
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor } from '@/constants/theme';
+import { Font, Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
@@ -20,42 +20,46 @@ const styles = StyleSheet.create({
   small: {
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: 400,
+    fontFamily: Font.regular,
   },
   smallBold: {
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: 600,
+    fontFamily: Font.bold,
   },
   default: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: 400,
+    fontFamily: Font.regular,
   },
   title: {
-    fontSize: 48,
-    fontWeight: 500,
-    lineHeight: 52,
+    fontSize: 44,
+    lineHeight: 50,
+    fontFamily: Font.heading,
+    letterSpacing: -1.5,
   },
   subtitle: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: 600,
+    fontSize: 26,
+    lineHeight: 34,
+    fontFamily: Font.heading,
+    letterSpacing: -0.8,
   },
   // A heading inside a screen ("Shops on campus", "Buy again").
   section: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: 600,
+    fontSize: 20,
+    lineHeight: 26,
+    fontFamily: Font.heading,
+    letterSpacing: -0.5,
   },
   link: {
     lineHeight: 30,
     fontSize: 14,
+    fontFamily: Font.regular,
   },
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    fontWeight: 600,
+    fontFamily: Font.bold,
   },
   code: {
     fontFamily: Fonts.mono,

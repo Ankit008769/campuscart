@@ -16,7 +16,7 @@ export const Colors = {
     backgroundElement: '#F2F3F0',
     backgroundSelected: '#E3E5DF',
     textSecondary: '#5F6368',
-    tint: '#13793A',
+    tint: '#0C831F',
     border: '#E3E5DF',
   },
   dark: {
@@ -31,6 +31,19 @@ export const Colors = {
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+
+/**
+ * The website's fonts: DM Sans for text, Manrope for headings. Each weight is its own family
+ * (loaded in app/_layout.tsx), because Android ignores fontWeight on custom fonts.
+ */
+export const Font = {
+  regular: 'DMSans_400Regular',
+  medium: 'DMSans_500Medium',
+  semibold: 'DMSans_600SemiBold',
+  bold: 'DMSans_700Bold',
+  heading: 'Manrope_800ExtraBold',
+  headingBold: 'Manrope_700Bold',
+} as const;
 
 export const Fonts = Platform.select({
   ios: {
