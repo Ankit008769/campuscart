@@ -163,7 +163,7 @@ site_url = "http://localhost:3000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 # Return links for Google sign-in in the student and shop apps (the "scheme" in each app.json).
 # The bare forms are what the apps send (Linking.createURL('')); listed exactly so no glob subtlety applies.
-additional_redirect_urls = ["campuscart://", "campuscart://**", "campuscart-partner://", "campuscart-partner://**"]
+additional_redirect_urls = ["campuscart://", "campuscart://**", "campuscart-partner://", "campuscart-partner://**", "http://localhost:5173/"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.

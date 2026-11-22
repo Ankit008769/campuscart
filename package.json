@@ -9,6 +9,7 @@
   "scripts": {
     "consumer": "npm run start -w @campuscart/consumer",
     "admin": "npm run dev -w @campuscart/admin",
+    "web": "npm run dev -w @campuscart/web",
     "db:push": "npm run push -w @campuscart/supabase",
     "db:types": "npm run types -w @campuscart/supabase",
     "typecheck": "npm run typecheck --workspaces --if-present",

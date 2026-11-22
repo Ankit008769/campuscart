@@ -1,6 +1,12 @@
 # Plan: students order from a website, on the same database as the app
 
-Status: plan only (22 November 2026). Nothing here is built yet.
+Status (22 November 2026): **built as `apps/web`**, not yet hosted.
+
+**Decision:** the website should keep the old site's look. So instead of publishing the Expo app's
+web build (option A below), the old site's customer pages and stylesheets were rebuilt in this
+repo as `apps/web` (Vite + React). All data goes through `@campuscart/core`, the same as the app,
+so it has the same database, the same rules and no server of its own. See `apps/web/README.md`.
+The rest of this file is the original comparison.
 
 ## Goal
 
