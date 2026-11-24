@@ -1,5 +1,6 @@
 import type { CartItemInput } from '@campuscart/core';
 import { createContext, use, useState, type ReactNode } from 'react';
+import { Alert } from 'react-native';
 
 /** A shop whose items are in the cart. */
 export type CartShop = { id: string; name: string; doesDelivery: boolean; doesPickup: boolean };
@@ -22,7 +23,6 @@ export type CartLine = {
 };
 
 type ShopLine = { variantId: string; productName: string; label: string; pricePaise: number };
-type RoutedLine = { masterProductId: string; productName: string; label: string; pricePaise: number };
 
 type Cart = {
   lines: CartLine[];
@@ -34,7 +34,6 @@ type Cart = {
   subtotalPaise: number;
   qtyOf: (key: string) => number;
   add: (shop: CartShop, line: ShopLine) => void;
-  addRouted: (line: RoutedLine) => void;
   /** Replaces the whole cart, e.g. with an earlier order's items for "Order again". */
   fill: (shop: CartShop, lines: (ShopLine & { qty: number })[]) => void;
   setQty: (key: string, qty: number) => void;
@@ -44,7 +43,6 @@ type Cart = {
 };
 
 const MAX_QTY = 50; // place_order accepts 1 to 50 of each item.
-export const routedKey = (masterProductId: string) => `m:${masterProductId}`;
 
 const CartContext = createContext<Cart | null>(null);
 
@@ -68,8 +66,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     itemCount: lines.reduce((sum, line) => sum + line.qty, 0),
     subtotalPaise: lines.reduce((sum, line) => sum + line.pricePaise * line.qty, 0),
     qtyOf: (key) => lines.find((line) => line.key === key)?.qty ?? 0,
-    add: (shop, line) => bump({ ...line, key: line.variantId, shop }),
-    addRouted: (line) => bump({ ...line, key: routedKey(line.masterProductId), shop: null }),
+    // One shop per order: adding from another shop asks first, then starts a fresh cart with it.
+    add: (shop, line) => {
+      const other = lines.find((l) => l.shop?.id !== shop.id);
+      if (!other) {
+        bump({ ...line, key: line.variantId, shop });
+        return;
+      }
+      const current = other.shop?.name ?? 'another shop';
+      Alert.alert(
+        'Start a new cart?',
+        `Your cart has items from ${current}. One order can only be from one shop, so adding ${line.productName} from ${shop.name} will clear your cart.`,
+        [
+          { text: `Keep ${current}`, style: 'cancel' },
+          { text: 'Clear cart and add', style: 'destructive', onPress: () => setLines([{ ...line, key: line.variantId, shop, qty: 1 }]) },
+        ],
+      );
+    },
     fill: (shop, next) =>
       setLines(next.map((line) => ({ ...line, key: line.variantId, shop, qty: Math.min(Math.max(line.qty, 1), MAX_QTY) }))),
     setQty: (key, qty) =>

@@ -18,7 +18,7 @@ import {
 import { Brand, Radius } from '@campuscart/ui';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CouponBox, type AppliedCoupon } from '@/components/coupon-box';
@@ -33,6 +33,7 @@ import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
 import { supabase } from '@/lib/supabase';
 import { PhoneRequired } from '@/components/phone-required';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { useNeedsPhone } from '@/hooks/use-needs-phone';
 
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
@@ -135,7 +136,7 @@ export function MultiShopCheckout() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardScroll contentContainerStyle={styles.content}>
         {!preview && !error && <ActivityIndicator />}
         {preview?.problems.map((problem) => (
           <Text key={problem} style={styles.error}>
@@ -249,7 +250,7 @@ export function MultiShopCheckout() {
         )}
 
         {error && <Text style={styles.error}>{error}</Text>}
-      </ScrollView>
+      </KeyboardScroll>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
         {needsPhone && <PhoneRequired />}

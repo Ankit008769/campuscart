@@ -1,16 +1,10 @@
-import { formatPaise } from '@campuscart/core';
-import { Radius } from '@campuscart/ui';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { GridProductCard, SectionTitle } from '@/components/grid';
 import { PhotoCredits } from '@/components/photo-credits';
-import { ProductImage } from '@/components/product-image';
-import { QtyStepper } from '@/components/qty-stepper';
-import { RiseIn } from '@/components/rise-in';
-import { SectionHeader } from '@/components/section-header';
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
-import { routedKey, useCart } from '@/lib/cart';
-import { logStep } from '@/lib/events';
+import { Font, Spacing } from '@/constants/theme';
+import { useCart } from '@/lib/cart';
+import { offersForMasters, useMenus } from '@/lib/menus';
 
 export type StripProduct = {
   master_product_id: string;
@@ -22,66 +16,55 @@ export type StripProduct = {
   min_price_paise: number;
 };
 
-
 /**
- * A sideways row of products the student can add straight to the cart; CampusCart picks the shop
- * at checkout. Used for collections on Home and "often bought together" in the cart.
+ * A sideways row of catalog products, each shown as one shop's own item so it adds straight to
+ * that shop's order: the cart's shop when it sells it, else an open shop that has it. With
+ * `onlyCartShop`, only the cart's shop's items show (for "often bought together" in the cart).
  */
-export function ProductStrip({ title, subtitle, products }: { title: string; subtitle?: string; products: StripProduct[] }) {
+export function ProductStrip({
+  title,
+  subtitle,
+  products,
+  onlyCartShop = false,
+}: {
+  title: string;
+  subtitle?: string | null;
+  products: StripProduct[];
+  onlyCartShop?: boolean;
+}) {
   const cart = useCart();
-  if (products.length === 0) return null;
+  const { shops, menus } = useMenus();
+  const cartShopId = cart.shops[0]?.id ?? null;
+  if (onlyCartShop && !cartShopId) return null;
+  const offers = offersForMasters(
+    shops,
+    menus,
+    products.map((p) => p.master_product_id),
+    cartShopId,
+    onlyCartShop ? cartShopId : null,
+  ).filter((o, i, all) => all.findIndex((x) => x.product.id === o.product.id) === i);
+  if (offers.length === 0) return null;
   return (
     <View style={styles.wrap}>
-      <SectionHeader title={title} subtitle={subtitle} />
+      <SectionTitle title={title} />
+      {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {products.map((p, i) => {
-          const key = routedKey(p.master_product_id);
-          return (
-            <RiseIn key={p.master_product_id} index={i} style={styles.card}>
-              {p.image_path ? (
-                <ProductImage path={p.image_path} style={styles.photo} label={p.name} />
-              ) : (
-                <View style={styles.photo} />
-              )}
-              <ThemedText type="small" numberOfLines={2}>
-                {p.name}
-                {p.size ? ` · ${p.size}` : ''}
-              </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {formatPaise(p.min_price_paise)}
-              </ThemedText>
-              <QtyStepper
-                qty={cart.qtyOf(key)}
-                onAdd={() => {
-                  logStep('add_to_cart');
-                  cart.addRouted({ masterProductId: p.master_product_id, productName: p.name, label: p.size, pricePaise: p.min_price_paise });
-                }}
-                onRemove={() => cart.setQty(key, cart.qtyOf(key) - 1)}
-              />
-            </RiseIn>
-          );
-        })}
+        {offers.map(({ shop, product }) => (
+          <GridProductCard key={product.id} product={product} shop={shop} width={118} showShop={!onlyCartShop} />
+        ))}
       </ScrollView>
-      {products.some((p) => p.photo_credit) && <PhotoCredits items={products} />}
+      {products.some((p) => p.photo_credit) && (
+        <View style={styles.credits}>
+          <PhotoCredits items={products} />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: Spacing.two,
-  },
-  row: {
-    gap: Spacing.three,
-  },
-  card: {
-    width: 120,
-    gap: Spacing.one,
-  },
-  photo: {
-    width: 120,
-    height: 90,
-    borderRadius: Radius.medium,
-    backgroundColor: '#00000011',
-  },
+  wrap: { gap: Spacing.two },
+  subtitle: { fontFamily: Font.regular, fontSize: 13, color: '#666666', paddingHorizontal: Spacing.three, marginTop: -4 },
+  row: { paddingHorizontal: Spacing.three, gap: 12 },
+  credits: { paddingHorizontal: Spacing.three },
 });

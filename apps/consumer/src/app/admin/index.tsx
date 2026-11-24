@@ -2,12 +2,13 @@ import { createShop, listShopsForAdmin } from '@campuscart/core';
 import { Brand, Radius } from '@campuscart/ui';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
 import { AppVersionCard } from '@/components/app-version-card';
 import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -62,7 +63,7 @@ export default function AdminShopsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Card accessibilityLabel="Monthly bills" onPress={() => router.push('/admin/bills')}>
           <ThemedText type="smallBold">Monthly bills</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -73,6 +74,12 @@ export default function AdminShopsScreen() {
           <ThemedText type="smallBold">Students</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             Who has signed up: name, email, phone, hostel and how often they order.
+          </ThemedText>
+        </Card>
+        <Card accessibilityLabel="Send a notification" onPress={() => router.push('/admin/notify')}>
+          <ThemedText type="smallBold">Send a notification</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            A push to students&apos; phones: everyone, one hostel or one batch. Up to three a day.
           </ThemedText>
         </Card>
         <Card accessibilityLabel="Suggestions" onPress={() => router.push('/admin/suggestions')}>
@@ -113,7 +120,7 @@ export default function AdminShopsScreen() {
         <Pressable accessibilityRole="button" onPress={signOut}>
           <ThemedText type="linkPrimary">Sign out</ThemedText>
         </Pressable>
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }

@@ -2,7 +2,7 @@ import { ORDER_STATUS_LABEL, formatPaise, isFinal, listMyOrders, slotLabel, watc
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/card';
@@ -12,6 +12,7 @@ import { SectionHeader } from '@/components/section-header';
 import { SkeletonList } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -72,7 +73,7 @@ export default function OrdersScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <KeyboardScroll contentContainerStyle={styles.content}>
           <ThemedText type="subtitle" accessibilityRole="header">
             Your orders
           </ThemedText>
@@ -117,7 +118,7 @@ export default function OrdersScreen() {
             <SectionHeader title="Ordering with friends?" subtitle="Join their group order with its 6-letter code." />
             <JoinGroup />
           </View>
-        </ScrollView>
+        </KeyboardScroll>
       </SafeAreaView>
     </ThemedView>
   );

@@ -2,11 +2,12 @@ import { getMyProfile, listDropPoints, normalizeIndianMobile, requestAccountDele
 import { Brand, Radius } from '@campuscart/ui';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
 import { DropPointPicker } from '@/components/drop-point-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -106,7 +107,7 @@ export default function ProfileScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ThemedText type="small" themeColor="textSecondary">
           {session?.user.email}
         </ThemedText>
@@ -154,7 +155,7 @@ export default function ProfileScreen() {
         <Pressable accessibilityRole="button" onPress={confirmDeletion} style={styles.delete}>
           <Text style={styles.deleteText}>Delete my account</Text>
         </Pressable>
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }

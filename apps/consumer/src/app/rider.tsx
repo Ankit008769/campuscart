@@ -20,11 +20,12 @@ import {
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { RiderCash } from '@/components/rider-cash';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -119,7 +120,7 @@ export default function RiderScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {error && <Text style={styles.error}>{error}</Text>}
 
         {(!rider || rider.status === 'rejected') && (
@@ -252,7 +253,7 @@ export default function RiderScreen() {
         <Pressable accessibilityRole="button" onPress={() => router.back()}>
           <ThemedText type="linkPrimary">Back</ThemedText>
         </Pressable>
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }

@@ -1,18 +1,19 @@
-import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
-import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
-import { DMSans_600SemiBold } from '@expo-google-fonts/dm-sans/600SemiBold';
-import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
-import { Manrope_700Bold } from '@expo-google-fonts/manrope/700Bold';
-import { Manrope_800ExtraBold } from '@expo-google-fonts/manrope/800ExtraBold';
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
+import { Inter_800ExtraBold } from '@expo-google-fonts/inter/800ExtraBold';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { AppError, OfflineBanner } from '@/components/app-status';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { CartProvider } from '@/lib/cart';
+import { MenusProvider } from '@/lib/menus';
 import { logStep } from '@/lib/events';
 import { registerForOrderPushes, useOpenTappedOrder, useStopRingingOnOpen } from '@/lib/push';
 import { TermsGate } from '@/lib/terms';
@@ -28,23 +29,26 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <CartProvider>
-          <RootNavigator />
-        </CartProvider>
-      </AuthProvider>
+      <KeyboardProvider>
+        <AuthProvider>
+          <CartProvider>
+            <MenusProvider>
+              <RootNavigator />
+            </MenusProvider>
+          </CartProvider>
+        </AuthProvider>
+      </KeyboardProvider>
     </ThemeProvider>
   );
 }
 
-// The website's fonts (constants/theme.ts Font). If they fail to load, the system font is used.
+// The app's font, Inter (constants/theme.ts Font). If it fails to load, the system font is used.
 const FONTS = {
-  DMSans_400Regular,
-  DMSans_500Medium,
-  DMSans_600SemiBold,
-  DMSans_700Bold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
 };
 
 function RootNavigator() {

@@ -10,10 +10,11 @@ import { Brand, Radius } from '@campuscart/ui';
 import { Image } from 'expo-image';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { pickAndUploadItemPhoto, type PhotoSource } from '@/lib/item-photo';
@@ -159,7 +160,7 @@ export default function ItemEditor() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: isNew ? 'New item' : 'Edit item' }} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.photoRow}>
           {imagePath ? (
             <Image source={productPhotoUrl(SUPABASE_URL, imagePath)} style={styles.photo} contentFit="cover" />
@@ -310,7 +311,7 @@ export default function ItemEditor() {
           style={[styles.save, (busy !== null || !shopId) && styles.disabled]}>
           {busy === 'save' ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.saveText}>Save item</Text>}
         </Pressable>
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }
