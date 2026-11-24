@@ -12,14 +12,15 @@ import {
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Icon } from '@/components/icon';
+import { CallShop } from '@/components/grid';
 import { PayAtHandover } from '@/components/pay-at-handover';
 import { RateOrder } from '@/components/rate-order';
 import { TrackingMap } from '@/components/tracking-map';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useCart } from '@/lib/cart';
 import { useRiderPosition } from '@/lib/live-location';
@@ -133,7 +134,7 @@ export default function OrderScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardScroll contentContainerStyle={styles.content}>
         <View style={[styles.hero, ended && styles.heroEnded]}>
           <Text style={styles.heroTitle}>{ORDER_STATUS_LABEL[order.status]}</Text>
           <Text style={styles.heroSub}>
@@ -179,7 +180,7 @@ export default function OrderScreen() {
           </ThemedView>
         )}
 
-        {order.shops?.phone && <CallShop name={order.shops.name} phone={order.shops.phone} />}
+        <CallShop phone={order.shops?.phone} title={`Questions? Call ${order.shops?.name ?? 'the shop'}`} note="About a delay, a missing item or the handover." />
 
         {onTheWay && <TrackingMap rider={riderPosition} dropPoint={order.drop_points} />}
 
@@ -259,7 +260,7 @@ export default function OrderScreen() {
           </Pressable>
         )}
         {error && <Text style={styles.error}>{error}</Text>}
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }
@@ -284,51 +285,7 @@ function FeeRow({ label, paise }: { label: string; paise: number }) {
   );
 }
 
-/** The shop's number on every order, so the student can call about a delay, a missing item or the handover. */
-function CallShop({ name, phone }: { name: string; phone: string }) {
-  const digits = phone.replace(/\D/g, '');
-  const shown = digits.length === 10 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : phone;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Call ${name}, ${shown}`}
-      onPress={() => Linking.openURL(`tel:${digits.length === 10 ? `+91${digits}` : phone}`)}
-      style={({ pressed }) => [styles.callShop, pressed && styles.callShopPressed]}>
-      <View style={styles.callIcon}>
-        <Icon name="phone" size={18} color="#ffffff" />
-      </View>
-      <View style={styles.flex}>
-        <ThemedText type="smallBold">Questions? Call {name}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {shown}
-        </ThemedText>
-      </View>
-      <ThemedText type="linkPrimary">Call</ThemedText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  callShop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    borderWidth: 1,
-    borderColor: Brand.green,
-    borderRadius: Radius.medium,
-    padding: Spacing.three,
-  },
-  callShopPressed: {
-    opacity: 0.7,
-  },
-  callIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: Brand.green,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   container: {
     flex: 1,
   },

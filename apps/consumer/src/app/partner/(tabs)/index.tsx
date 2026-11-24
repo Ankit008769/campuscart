@@ -11,13 +11,14 @@ import {
 } from '@campuscart/core';
 import { Brand, Radius, StatusBadge } from '@campuscart/ui';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ShopRiderCash } from '@/components/shop-rider-cash';
 import { OrderItemsEditor } from '@/components/order-items-editor';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -116,7 +117,7 @@ export default function OrdersScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <KeyboardScroll contentContainerStyle={styles.content}>
           {shops === undefined && !error && <ActivityIndicator style={styles.loading} />}
 
           {shops?.length === 0 && (
@@ -219,7 +220,7 @@ export default function OrdersScreen() {
               <ThemedText type="linkPrimary">Sign out</ThemedText>
             </Pressable>
           </ThemedView>
-        </ScrollView>
+        </KeyboardScroll>
       </SafeAreaView>
     </ThemedView>
   );

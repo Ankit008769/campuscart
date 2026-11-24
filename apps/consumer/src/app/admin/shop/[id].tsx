@@ -2,11 +2,12 @@ import { isUpiVpa, listShopsForAdmin, updateShop } from '@campuscart/core';
 import { Brand, Radius } from '@campuscart/ui';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
 import { ShopLogins } from '@/components/shop-logins';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
@@ -75,7 +76,7 @@ export default function AdminShopScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: shop?.name ?? 'Shop' }} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {!shop && !error && <ActivityIndicator style={styles.loading} />}
         {shop && (
           <>
@@ -107,7 +108,7 @@ export default function AdminShopScreen() {
           </>
         )}
         {error && <Text style={styles.error}>{error}</Text>}
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }

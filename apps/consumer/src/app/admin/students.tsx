@@ -2,10 +2,11 @@ import { listStudentsForAdmin } from '@campuscart/core';
 import { Radius, StatusBadge } from '@campuscart/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
@@ -40,7 +41,7 @@ export default function StudentsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {!students && !error && <ActivityIndicator />}
         {error && <Text style={styles.error}>{error}</Text>}
         {students && (
@@ -100,7 +101,7 @@ export default function StudentsScreen() {
             {students.length === 0 ? 'No students yet.' : 'Nobody matches that search.'}
           </ThemedText>
         )}
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }

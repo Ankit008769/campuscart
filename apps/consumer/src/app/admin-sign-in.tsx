@@ -2,10 +2,11 @@ import { authenticatorStatus, startAuthenticatorSetup, verifyAuthenticatorCode, 
 import { Brand, Radius } from '@campuscart/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IdSignInForm } from '@/components/id-sign-in-form';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -21,7 +22,7 @@ export default function AdminSignInScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
+        <KeyboardScroll contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
           {needsAdminCode ? (
             <>
               <Pressable accessibilityRole="button" onPress={signOut} hitSlop={8}>
@@ -40,7 +41,7 @@ export default function AdminSignInScreen() {
               <IdSignInForm />
             </>
           )}
-        </ScrollView>
+        </KeyboardScroll>
       </SafeAreaView>
     </View>
   );

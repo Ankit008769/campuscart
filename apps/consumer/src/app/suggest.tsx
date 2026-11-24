@@ -1,10 +1,11 @@
 import { sendSuggestion } from '@campuscart/core';
 import { Brand, Radius } from '@campuscart/ui';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -39,8 +40,8 @@ export default function SuggestScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <View style={styles.container}>
+        <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <ThemedText type="section">Help make Campus Cart better</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             A shop you want on the app, something confusing, a bug, an idea: write it here. It goes straight to the developer, who
@@ -78,8 +79,8 @@ export default function SuggestScreen() {
             Your name and email go with it, so we can reply if needed. For a problem with an order, call the shop from the order
             screen first.
           </ThemedText>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardScroll>
+      </View>
     </ThemedView>
   );
 }

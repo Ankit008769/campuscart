@@ -18,7 +18,7 @@ import { randomUUID } from 'expo-crypto';
 import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { DropPointPicker } from '@/components/drop-point-picker';
 import { QtyStepper } from '@/components/qty-stepper';
@@ -29,6 +29,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { PhoneRequired } from '@/components/phone-required';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { useNeedsPhone } from '@/hooks/use-needs-phone';
 
 type PrintShop = Awaited<ReturnType<typeof listPrintShops>>[number];
@@ -158,7 +159,7 @@ export default function PrintScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardScroll contentContainerStyle={styles.content}>
         {shops.length === 0 && (
           <ThemedText type="small" themeColor="textSecondary">
             No shop takes print orders right now.
@@ -301,7 +302,7 @@ export default function PrintScreen() {
         )}
 
         {error && <Text style={styles.error}>{error}</Text>}
-      </ScrollView>
+      </KeyboardScroll>
     </ThemedView>
   );
 }

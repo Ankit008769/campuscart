@@ -9,6 +9,7 @@ export default function AdminLayout() {
       <Stack.Screen name="bills" options={{ title: 'Monthly bills' }} />
       <Stack.Screen name="suggestions" options={{ title: 'Suggestions' }} />
       <Stack.Screen name="students" options={{ title: 'Students' }} />
+      <Stack.Screen name="notify" options={{ title: 'Send a notification' }} />
     </Stack>
   );
 }

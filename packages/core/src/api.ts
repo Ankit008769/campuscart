@@ -28,7 +28,7 @@ void modesMatch;
 export async function listShops(client: CampusClient) {
   const { data, error } = await client
     .from('shops')
-    .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup')
+    .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup, phone')
     .order('is_open', { ascending: false })
     .order('name');
   if (error) throw error;
@@ -57,14 +57,14 @@ export async function getShopMenu(client: CampusClient, shopId: string) {
   const [shop, products] = await Promise.all([
     client
       .from('shops')
-      .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup')
+      .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup, phone')
       .eq('id', shopId)
       .single(),
     client
       .from('products')
       // One literal string, so supabase-js can infer the row type from it.
       .select(
-        'id, name, description, image_path, is_veg, photo_credit, photo_source_url, availability_note, categories (name, sort), variants (id, label, price_paise, mrp_paise, in_stock, sort)',
+        'id, name, description, image_path, is_veg, photo_credit, photo_source_url, availability_note, categories (name, sort), variants (id, label, price_paise, mrp_paise, in_stock, sort, master_product_id)',
       )
       .eq('shop_id', shopId)
       .eq('active', true)

@@ -37,6 +37,14 @@ export const Storefront = {
   chipLine: '#E0E7DF',
   addFill: '#F7FFF9',
   chip: '#F5F5F5',
+  // The quick-commerce home: a warm cream header, light tiles behind product photos, white page.
+  header: '#F8E7C3',
+  headerDeep: '#F3DDB0',
+  tile: '#EEF2F6',
+  tileInner: '#FFFFFF',
+  page: '#FFFFFF',
+  muted: '#666666',
+  rating: '#F5A623',
 } as const;
 
 export const Radius = {

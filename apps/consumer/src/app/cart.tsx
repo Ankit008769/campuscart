@@ -16,7 +16,7 @@ import {
 import { Brand, Radius } from '@campuscart/ui';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CouponBox, type AppliedCoupon } from '@/components/coupon-box';
@@ -35,6 +35,7 @@ import { useCart } from '@/lib/cart';
 import { logStep } from '@/lib/events';
 import { supabase } from '@/lib/supabase';
 import { PhoneRequired } from '@/components/phone-required';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 
 type DropPoint = Awaited<ReturnType<typeof listDropPoints>>[number];
 
@@ -145,7 +146,7 @@ export default function CartScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardScroll contentContainerStyle={styles.content}>
         <ThemedText type="smallBold">{shop.name}</ThemedText>
         <ThemedView type="backgroundElement" style={styles.card}>
           {cart.lines.map((line) => (
@@ -245,7 +246,7 @@ export default function CartScreen() {
         </ThemedView>
 
         {error && <Text style={styles.error}>{error}</Text>}
-      </ScrollView>
+      </KeyboardScroll>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
         {needsPhone && <PhoneRequired />}

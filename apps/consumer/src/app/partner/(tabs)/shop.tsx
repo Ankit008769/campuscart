@@ -13,13 +13,14 @@ import {
 import { Brand, Radius } from '@campuscart/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OutletSwitcher } from '@/components/outlet-switcher';
 import { ShopLogins } from '@/components/shop-logins';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { chooseOutlet, loadMyShop, loadMyShops, type MyShop } from '@/lib/my-shop';
 import { supabase } from '@/lib/supabase';
@@ -68,7 +69,7 @@ export default function ShopScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <ThemedText type="subtitle">Shop</ThemedText>
           <OutletSwitcher shops={shops} value={shop?.id} onChange={pickOutlet} />
           {shop === undefined && !error && <ActivityIndicator />}
@@ -128,7 +129,7 @@ export default function ShopScreen() {
               )}
             </>
           )}
-        </ScrollView>
+        </KeyboardScroll>
       </SafeAreaView>
     </ThemedView>
   );
