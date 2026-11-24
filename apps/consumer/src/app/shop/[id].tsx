@@ -35,9 +35,9 @@ import { supabase } from '@/lib/supabase';
 type Menu = Awaited<ReturnType<typeof getShopMenu>>;
 type Product = Menu['products'][number];
 
-// Width of the category rail on the left, and the gap between the two product columns.
+// Width of the category rail on the left, and the gap between the three product columns.
 const RAIL = 84;
-const GAP = 10;
+const GAP = 8;
 
 /** Groups products under the shop's own menu categories, in menu order. */
 function sectionsOf(products: Product[]) {
@@ -153,7 +153,7 @@ export default function ShopScreen() {
   const current = sections.find((s) => s.title === picked) ?? sections[0];
   const shown = searching ? products.filter((p) => matches(p, query)) : (current?.data ?? []);
   const pane = Math.min(screen, MaxContentWidth) - (searching ? 0 : RAIL);
-  const cardWidth = Math.floor((pane - GAP * 3) / 2);
+  const cardWidth = Math.floor((pane - GAP * 4) / 3);
 
   return (
     <ThemedView style={styles.container}>
@@ -217,9 +217,9 @@ export default function ShopScreen() {
           </ScrollView>
         )}
         <FlatList
-          key={searching ? 'search' : 'menu'}
+          key={searching ? 'search3' : 'menu3'}
           data={shown}
-          numColumns={2}
+          numColumns={3}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"

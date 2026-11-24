@@ -225,6 +225,8 @@ export function GridProductCard({
     cart.add(cartShopOf(shop), { variantId: variant.id, productName: product.name, label: variant.label, pricePaise: variant.price_paise });
   };
   const discount = first.mrp_paise && first.mrp_paise > first.price_paise ? first.mrp_paise : null;
+  // Three to a row inside a shop: smaller text, padding and buttons so it all still fits.
+  const small = width < 110;
 
   return (
     <View style={{ width }}>
@@ -232,7 +234,7 @@ export function GridProductCard({
         accessibilityRole="button"
         accessibilityHint={`Opens ${shop.name}`}
         onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop.id } })}
-        style={[styles.cardPhoto, { height: width }]}>
+        style={[styles.cardPhoto, { height: width }, small && styles.cardPhotoSmall]}>
         {product.image_path ? <ProductImage path={product.image_path} style={styles.fill} label={product.name} /> : null}
         {product.is_veg != null && (
           <View style={[styles.vegBox, { borderColor: product.is_veg ? '#0F8A2F' : '#C62828' }]}>
@@ -246,8 +248,8 @@ export function GridProductCard({
             accessibilityLabel={favourite ? `Remove ${product.name} from favourites` : `Add ${product.name} to favourites`}
             onPress={onToggleFavourite}
             hitSlop={10}
-            style={styles.heart}>
-            <Icon name={favourite ? 'heartFilled' : 'heart'} size={18} color={favourite ? Brand.red : '#8A8A8A'} />
+            style={[styles.heart, small && styles.heartSmall]}>
+            <Icon name={favourite ? 'heartFilled' : 'heart'} size={small ? 14 : 18} color={favourite ? Brand.red : '#8A8A8A'} />
           </Pressable>
         )}
         {(soldOut || !shop.is_open) && (
@@ -256,14 +258,14 @@ export function GridProductCard({
           </View>
         )}
       </Pressable>
-      <View style={styles.addWrap}>
+      <View style={[styles.addWrap, small && styles.addWrapSmall]}>
         {variants.length > 1 ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Add ${product.name}, choose a size`}
             disabled={!canAdd}
             onPress={() => setSizes(true)}
-            style={[styles.addButton, !canAdd && styles.disabled, inCart > 0 && styles.addButtonOn]}>
+            style={[styles.addButton, small && styles.addButtonSmall, !canAdd && styles.disabled, inCart > 0 && styles.addButtonOn]}>
             <Text style={[styles.addText, inCart > 0 && styles.addTextOn]}>{inCart > 0 ? `${inCart} added` : 'ADD'}</Text>
             <Text style={[styles.options, inCart > 0 && styles.addTextOn]}>{variants.length} options</Text>
           </Pressable>
@@ -277,11 +279,11 @@ export function GridProductCard({
             {first.label}
           </Text>
         )}
-        <Text style={styles.price}>
+        <Text style={[styles.price, small && styles.priceSmall]}>
           {formatPaise(first.price_paise)}
           {discount ? <Text style={styles.mrp}> {formatPaise(discount)}</Text> : null}
         </Text>
-        <Text style={styles.name} numberOfLines={2}>
+        <Text style={[styles.name, small && styles.nameSmall]} numberOfLines={2}>
           {product.name}
         </Text>
         {showShop && (
@@ -438,6 +440,12 @@ const styles = StyleSheet.create({
   tileCall: { fontFamily: Font.semibold, fontSize: 11, color: Brand.green, textAlign: 'center', marginTop: 2 },
   tileName: { fontFamily: Font.semibold, fontSize: 13, lineHeight: 17, color: '#1C1C1C', textAlign: 'center', marginTop: 8 },
 
+  cardPhotoSmall: { padding: 4, borderRadius: 10 },
+  heartSmall: { width: 22, height: 22, borderRadius: 11, right: 4, top: 4 },
+  addWrapSmall: { marginTop: -18, marginRight: 4 },
+  addButtonSmall: { minWidth: 60, minHeight: 32, paddingHorizontal: 6 },
+  priceSmall: { fontSize: 13 },
+  nameSmall: { fontSize: 12, lineHeight: 15 },
   cardPhoto: { borderRadius: 12, borderWidth: 1, borderColor: '#ECECEC', backgroundColor: '#ffffff', overflow: 'hidden', padding: 8 },
   vegBox: { position: 'absolute', right: 8, bottom: 8, width: 14, height: 14, borderWidth: 1.5, borderRadius: 3, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff' },
   vegDot: { width: 6, height: 6, borderRadius: 3 },
