@@ -1,6 +1,6 @@
 import type { CartItemInput } from '@campuscart/core';
 import { createContext, use, useState, type ReactNode } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 /** A shop whose items are in the cart. */
 export type CartShop = { id: string; name: string; doesDelivery: boolean; doesPickup: boolean };
@@ -74,14 +74,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
       const current = other.shop?.name ?? 'another shop';
-      Alert.alert(
-        'Start a new cart?',
-        `Your cart has items from ${current}. One order can only be from one shop, so adding ${line.productName} from ${shop.name} will clear your cart.`,
-        [
-          { text: `Keep ${current}`, style: 'cancel' },
-          { text: 'Clear cart and add', style: 'destructive', onPress: () => setLines([{ ...line, key: line.variantId, shop, qty: 1 }]) },
-        ],
-      );
+      const message = `Your cart has items from ${current}. One order can only be from one shop, so adding ${line.productName} from ${shop.name} will clear your cart.`;
+      const replace = () => setLines([{ ...line, key: line.variantId, shop, qty: 1 }]);
+      // Alert does nothing on the web, so the browser's own dialog asks there.
+      if (Platform.OS === 'web') {
+        if (window.confirm(`Start a new cart?\n\n${message}`)) replace();
+        return;
+      }
+      Alert.alert('Start a new cart?', message, [
+        { text: `Keep ${current}`, style: 'cancel' },
+        { text: 'Clear cart and add', style: 'destructive', onPress: replace },
+      ]);
     },
     fill: (shop, next) =>
       setLines(next.map((line) => ({ ...line, key: line.variantId, shop, qty: Math.min(Math.max(line.qty, 1), MAX_QTY) }))),

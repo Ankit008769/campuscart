@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontFamily: Font.regular, fontSize: 15, color: '#1C1C1C', paddingVertical: 10 },
   body: { flex: 1, flexDirection: 'row', width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
-  rail: { width: RAIL, flexGrow: 0, backgroundColor: '#F7F8FA', borderRightWidth: 1, borderRightColor: '#EDEFF2' },
+  rail: { width: RAIL, flexGrow: 0, flexShrink: 0, backgroundColor: '#F7F8FA', borderRightWidth: 1, borderRightColor: '#EDEFF2' },
   railContent: { paddingBottom: 120 },
   railItem: { alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4 },
   railItemOn: { backgroundColor: '#ffffff' },
