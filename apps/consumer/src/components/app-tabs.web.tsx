@@ -1,11 +1,4 @@
-import {
-  Tabs,
-  TabList,
-  TabTrigger,
-  TabSlot,
-  TabTriggerSlotProps,
-  TabListProps,
-} from 'expo-router/ui';
+import type { TabListProps, TabTriggerSlotProps } from 'expo-router/ui';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -13,28 +6,7 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
-// On the web the tabs sit in a bar above the screen, in the page flow, so they never cover it.
-export default function AppTabs() {
-  return (
-    <Tabs style={styles.tabs}>
-      <TabList asChild>
-        <CustomTabList>
-          <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
-          </TabTrigger>
-          <TabTrigger name="orders" href="/orders" asChild>
-            <TabButton>Orders</TabButton>
-          </TabTrigger>
-          <TabTrigger name="account" href="/account" asChild>
-            <TabButton>Account</TabButton>
-          </TabTrigger>
-        </CustomTabList>
-      </TabList>
-      <TabSlot style={styles.slot} />
-    </Tabs>
-  );
-}
-
+// The shop side's web tabs: a bar above the screen, in the page flow. (Students have components/student-tabs.)
 // The trigger's ref is typed for a View, which Pressable's ref rejects; a tab button doesn't need it.
 export function TabButton({ children, isFocused, ref: _ref, ...props }: TabTriggerSlotProps) {
   return (
@@ -65,12 +37,6 @@ export function CustomTabList({ brand = 'CampusCart', ...props }: TabListProps &
 }
 
 const styles = StyleSheet.create({
-  tabs: {
-    flex: 1,
-  },
-  slot: {
-    flex: 1,
-  },
   tabListContainer: {
     width: '100%',
     paddingHorizontal: Spacing.three,

@@ -1,5 +1,5 @@
-import AppTabs from '@/components/app-tabs';
+import StudentTabs from '@/components/student-tabs';
 
 export default function TabsLayout() {
-  return <AppTabs />;
+  return <StudentTabs />;
 }

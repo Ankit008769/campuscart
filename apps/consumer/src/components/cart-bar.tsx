@@ -9,7 +9,8 @@ import { Font } from '@/constants/theme';
 import { useCart } from '@/lib/cart';
 
 /** Sticky green "View cart" bar shown while the cart has items. */
-export function CartBar({ bottomOffset = 0 }: { bottomOffset?: number }) {
+/** `onTabs`: shown above the student tab bar, which already leaves room for the phone's bottom edge. */
+export function CartBar({ bottomOffset = 0, onTabs = false }: { bottomOffset?: number; onTabs?: boolean }) {
   const cart = useCart();
   const insets = useSafeAreaInsets();
   if (cart.itemCount === 0) return null;
@@ -20,7 +21,7 @@ export function CartBar({ bottomOffset = 0 }: { bottomOffset?: number }) {
       accessibilityRole="button"
       accessibilityLabel={`View cart, ${items}, ${formatPaise(cart.subtotalPaise)}`}
       onPress={() => router.push('/cart')}
-      style={({ pressed }) => [styles.bar, { bottom: bottomOffset + insets.bottom + 12 }, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.bar, { bottom: bottomOffset + (onTabs ? 0 : insets.bottom) + 12 }, pressed && styles.pressed]}>
       <View style={styles.cartIcon}>
         <Icon name="cart" size={20} color="#ffffff" />
       </View>

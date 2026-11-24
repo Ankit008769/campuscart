@@ -21,7 +21,7 @@ import { ProductStrip } from '@/components/product-strip';
 import { SkeletonList } from '@/components/skeleton';
 import { PromoCards, type Promo } from '@/components/storefront';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Font, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Font, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useNeedsPhone } from '@/hooks/use-needs-phone';
 import { useAuth } from '@/lib/auth';
 import { readCache, writeCache } from '@/lib/cache';
@@ -183,7 +183,7 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <ScrollView
         stickyHeaderIndices={[0]}
-        contentContainerStyle={{ paddingBottom: BottomTabInset + Spacing.four + (cart.itemCount > 0 ? CART_BAR_SPACE : 0) }}
+        contentContainerStyle={{ paddingBottom: Spacing.four + (cart.itemCount > 0 ? CART_BAR_SPACE : 0) }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <WarmHeader
           location={location}
@@ -297,7 +297,7 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
-      <CartBar bottomOffset={BottomTabInset} />
+      <CartBar onTabs />
     </ThemedView>
   );
 }
