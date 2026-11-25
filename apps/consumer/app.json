@@ -2,7 +2,7 @@
   "expo": {
     "name": "CampusCart",
     "slug": "campuscart",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "campuscart",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.campuscart.student",
-      "versionCode": 9,
+      "versionCode": 10,
       "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
       "adaptiveIcon": {
         "backgroundColor": "#FFD23F",

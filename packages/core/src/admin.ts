@@ -510,6 +510,36 @@ export async function removeFromCollection(client: CampusClient, collectionId: s
   if (error) throw error;
 }
 
+/**
+ * Admin → Live orders: every open order in every shop, oldest first, with the student's delivery code
+ * and pickup token (admins only), so an admin can help when a student or shop is stuck.
+ */
+export async function listLiveOrdersForAdmin(client: CampusClient) {
+  const { data, error } = await client.rpc('admin_live_orders');
+  if (error) throw error;
+  // Columns a left join may leave empty (drop point, code, rider) come back null.
+  return data as (Omit<(typeof data)[number], 'accepted_at' | 'ready_at' | 'out_at' | 'delivery_otp' | 'drop_point' | 'room_note' | 'rider_name' | 'shop_phone' | 'student_phone'> & {
+    accepted_at: string | null;
+    ready_at: string | null;
+    out_at: string | null;
+    delivery_otp: string | null;
+    drop_point: string | null;
+    room_note: string | null;
+    rider_name: string | null;
+    shop_phone: string | null;
+    student_phone: string | null;
+  })[];
+}
+
+/**
+ * Finishes an open order a shop forgot to mark, without the student's code: a delivery becomes
+ * delivered, a pickup collected. Admins only; the reason is kept on the order's history.
+ */
+export async function adminCompleteOrder(client: CampusClient, orderId: string, reason: string) {
+  const { error } = await client.rpc('admin_complete_order', { p_order_id: orderId, p_note: reason.trim() });
+  if (error) throw error;
+}
+
 /** Admin → Students: everyone who signed in as a student, newest first, with their order counts. */
 export async function listStudentsForAdmin(client: CampusClient) {
   const { data, error } = await client.rpc('admin_list_students');

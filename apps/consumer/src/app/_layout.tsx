@@ -65,11 +65,11 @@ function RootNavigator() {
   }, [ready]);
 
   useEffect(() => {
-    if (!userId || !side || side === 'admin') return;
+    if (!userId || !side) return;
     if (side === 'student') logStep('app_open');
     registerForOrderPushes(side).catch((e: unknown) => console.warn('Could not turn on order notifications', e));
   }, [userId, side]);
-  useOpenTappedOrder(side === 'admin' ? null : side);
+  useOpenTappedOrder(side);
   useStopRingingOnOpen(side);
 
   // Admins can require a newer build (app_settings); nothing else opens until it is installed.

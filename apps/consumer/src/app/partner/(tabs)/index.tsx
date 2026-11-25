@@ -18,6 +18,7 @@ import { ShopRiderCash } from '@/components/shop-rider-cash';
 import { OrderItemsEditor } from '@/components/order-items-editor';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { CallButton } from '@/components/call-button';
 import { KeyboardScroll } from '@/components/keyboard-scroll';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -300,11 +301,7 @@ function OrderCard({
           {order.profiles?.name || 'Student'}
           {order.mode === 'delivery' ? ` · ${order.drop_points?.name ?? ''}${order.room_note ? `, ${order.room_note}` : ''}` : ''}
         </ThemedText>
-        {order.profiles?.phone && (
-          <Pressable onPress={() => Linking.openURL(`tel:${order.profiles?.phone}`)}>
-            <ThemedText type="linkPrimary">Call</ThemedText>
-          </Pressable>
-        )}
+        <CallButton phone={order.profiles?.phone} who={order.profiles?.name || 'the student'} />
       </View>
       {order.mode === 'delivery' && order.drop_points?.gate_only && (
         <ThemedText type="small" themeColor="textSecondary">
@@ -316,11 +313,7 @@ function OrderCard({
           <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
             Rider: {order.rider.name || 'CampusCart rider'}
           </ThemedText>
-          {order.rider.phone && (
-            <Pressable onPress={() => Linking.openURL(`tel:${order.rider?.phone}`)}>
-              <ThemedText type="linkPrimary">Call rider</ThemedText>
-            </Pressable>
-          )}
+          <CallButton phone={order.rider.phone} label="Call rider" />
         </View>
       )}
 
