@@ -29,7 +29,9 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <KeyboardProvider>
+      {/* The app draws under the status and navigation bars (Android edge-to-edge) and pads itself with
+          safe-area insets; without these flags the provider shrinks the app inside the bars instead. */}
+      <KeyboardProvider statusBarTranslucent navigationBarTranslucent preserveEdgeToEdge>
         <AuthProvider>
           <CartProvider>
             <MenusProvider>
