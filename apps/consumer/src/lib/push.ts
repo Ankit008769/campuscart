@@ -24,7 +24,8 @@ let tokenListener: Notifications.EventSubscription | null = null;
  * send-push uses the same channel ids.
  */
 async function createChannel(side: Side) {
-  if (side === 'student') {
+  // Students and admins: ordinary order updates (admins get one for every new order in every shop).
+  if (side !== 'shop') {
     await Notifications.setNotificationChannelAsync('orders', {
       name: 'Order updates',
       importance: AndroidImportance.HIGH,
@@ -103,6 +104,11 @@ export function useOpenTappedOrder(side: Side | null) {
     if (!supported() || !side) return;
     const open = (response: Notifications.NotificationResponse | null) => {
       const data = response?.notification.request.content.data;
+      if (side === 'admin') {
+        // Admin pushes are about new orders in any shop, which Live orders shows.
+        if (typeof data?.adminOrderId === 'string') router.push('/admin/orders');
+        return;
+      }
       if (side === 'shop') {
         // Shop pushes are all about orders, which the orders board shows.
         if (typeof data?.orderId === 'string') router.navigate('/partner');

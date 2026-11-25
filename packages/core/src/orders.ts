@@ -82,6 +82,12 @@ export function canTransition(args: {
   const { from, to, mode, actor } = args;
   if (isFinal(from)) return false;
 
+  // Admins may finish any open order a shop forgot to finish (admin_complete_order): a delivery
+  // becomes delivered, a pickup collected.
+  if (actor === 'admin' && (to === 'delivered' || to === 'collected') && (from === 'accepted' || from === 'ready' || from === 'out_for_delivery')) {
+    return (to === 'delivered') === (mode === 'delivery');
+  }
+
   // Admins may cancel any open order.
   if (to === 'cancelled' && actor === 'admin') return true;
 

@@ -1825,6 +1825,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_complete_order: {
+        Args: { p_note: string; p_order_id: string }
+        Returns: Database["public"]["Tables"]["orders"]["Row"]
+      }
       admin_list_students: {
         Args: never
         Returns: {
@@ -1842,6 +1846,31 @@ export type Database = {
           orders: number
           completed_orders: number
           last_order_at: string | null
+        }[]
+      }
+      admin_live_orders: {
+        Args: never
+        Returns: {
+          accepted_at: string
+          code: string
+          delivery_otp: string
+          drop_point: string
+          id: string
+          items: string
+          mode: Database["public"]["Enums"]["order_mode"]
+          out_at: string
+          placed_at: string
+          ready_at: string
+          rider_name: string
+          room_note: string
+          shop_id: string
+          shop_name: string
+          shop_phone: string
+          status: Database["public"]["Enums"]["order_status"]
+          student_name: string
+          student_phone: string
+          token_no: number
+          total_paise: number
         }[]
       }
       accept_terms: {

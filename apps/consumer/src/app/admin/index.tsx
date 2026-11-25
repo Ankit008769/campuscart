@@ -64,6 +64,25 @@ export default function AdminShopsScreen() {
   return (
     <ThemedView style={styles.container}>
       <KeyboardScroll contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Card accessibilityLabel="Live orders" onPress={() => router.push('/admin/orders')}>
+          <ThemedText type="smallBold">Live orders</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Every open order in every shop, live: delivery codes and tokens, call the shop or student, mark delivered without the
+            code, or cancel.
+          </ThemedText>
+        </Card>
+        <Card accessibilityLabel="Today" onPress={() => router.push('/admin/today')}>
+          <ThemedText type="smallBold">Today</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Orders, sales, dropped orders and new students today, each shop&apos;s numbers, and the last 7 days.
+          </ThemedText>
+        </Card>
+        <Card accessibilityLabel="Find an order" onPress={() => router.push('/admin/find')}>
+          <ThemedText type="smallBold">Find an order</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Any order by its code or the student&apos;s name, phone or email, with who changed it and when.
+          </ThemedText>
+        </Card>
         <Card accessibilityLabel="Monthly bills" onPress={() => router.push('/admin/bills')}>
           <ThemedText type="smallBold">Monthly bills</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -80,6 +99,18 @@ export default function AdminShopsScreen() {
           <ThemedText type="smallBold">Send a notification</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             A push to students&apos; phones: everyone, one hostel or one batch. Up to three a day.
+          </ThemedText>
+        </Card>
+        <Card accessibilityLabel="Riders" onPress={() => router.push('/admin/riders')}>
+          <ThemedText type="smallBold">Riders</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Approve or reject students who applied to deliver, and suspend a rider.
+          </ThemedText>
+        </Card>
+        <Card accessibilityLabel="Coupons" onPress={() => router.push('/admin/coupons')}>
+          <ThemedText type="smallBold">Coupons</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Make a discount code for every shop, and switch coupons on or off.
           </ThemedText>
         </Card>
         <Card accessibilityLabel="Suggestions" onPress={() => router.push('/admin/suggestions')}>
