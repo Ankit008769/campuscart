@@ -1,6 +1,6 @@
 import { Brand } from '@campuscart/ui';
 import { Tabs, TabList, TabSlot, TabTrigger, type TabTriggerSlotProps } from 'expo-router/ui';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/icon';
@@ -12,23 +12,23 @@ import { Font, MaxContentWidth } from '@/constants/theme';
  */
 export default function StudentTabs() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  // The tab buttons must be direct children of TabList: it only looks one level down for them,
+  // and buttons it doesn't find never switch tabs. Wide screens keep them centred with padding.
+  const side = Math.max(0, (width - MaxContentWidth) / 2);
   return (
     <Tabs style={styles.flex}>
       <TabSlot style={styles.flex} />
-      <TabList asChild>
-        <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-          <View style={styles.row}>
-            <TabTrigger name="index" href="/" asChild>
-              <TabButton icon="home" label="Home" />
-            </TabTrigger>
-            <TabTrigger name="orders" href="/orders" asChild>
-              <TabButton icon="orders" label="Orders" />
-            </TabTrigger>
-            <TabTrigger name="account" href="/account" asChild>
-              <TabButton icon="account" label="Account" />
-            </TabTrigger>
-          </View>
-        </View>
+      <TabList style={[styles.bar, { paddingBottom: insets.bottom + 8, paddingHorizontal: side }]}>
+        <TabTrigger name="index" href="/" asChild>
+          <TabButton icon="home" label="Home" />
+        </TabTrigger>
+        <TabTrigger name="orders" href="/orders" asChild>
+          <TabButton icon="orders" label="Orders" />
+        </TabTrigger>
+        <TabTrigger name="account" href="/account" asChild>
+          <TabButton icon="account" label="Account" />
+        </TabTrigger>
       </TabList>
     </Tabs>
   );
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 22,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: '#E6E6E6',
-    paddingTop: 8,
+    paddingTop: 10,
     // A soft shadow upwards, so the bar floats over the page.
     shadowColor: '#000000',
     shadowOpacity: 0.08,
@@ -67,7 +67,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     elevation: 16,
   },
-  row: { flexDirection: 'row', width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
   tab: { flex: 1, alignItems: 'center', gap: 3, minHeight: 52, justifyContent: 'center' },
   pressed: { opacity: 0.7, transform: [{ scale: 0.95 }] },
   pill: { width: 60, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },

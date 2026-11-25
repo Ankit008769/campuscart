@@ -1,8 +1,9 @@
 import { effectivePrepMinutes, formatPaise, type listCategories } from '@campuscart/core';
 import { Brand, Storefront } from '@campuscart/ui';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icon';
@@ -135,21 +136,115 @@ export function SectionTitle({ title, action, onAction }: { title: string; actio
  * One shop as a light tile with four of its items in a 2×2 grid that changes every few seconds,
  * "+N more" across the middle, and the shop's name under it.
  */
-export function ShopTile({ shop, photos, total, width }: { shop: Shop; photos: string[]; total: number; width: number }) {
-  const [offset, setOffset] = useState(0);
+// How long each set of four photos stays, and how long the slide to the next set takes.
+const SLIDE_EVERY_MS = 3500;
+const SLIDE_MS = 700;
+
+/**
+ * A tile's photos, four at a time in a 2×2 grid, sliding sideways to the next four with a light
+ * sheen passing over them. The next set is already drawn (off to the right) before it slides in,
+ * so photos never pop in or blink; the set that slides in stays mounted and becomes the current one.
+ */
+function SlidingPhotos({ photos, size, delay }: { photos: string[]; size: number; delay: number }) {
+  const [page, setPage] = useState(0);
+  const pageRef = useRef(0);
+  // Animated values live as long as the tile; useState's initialiser makes each one once.
+  const [x] = useState(() => new Animated.Value(0));
+  const [shine] = useState(() => new Animated.Value(0));
   const many = photos.length > 4;
+
   useEffect(() => {
+    x.setValue(-pageRef.current * size);
     if (!many) return;
-    // Each tile starts at a different moment, so the grid doesn't change all at once.
-    const start = setTimeout(() => setOffset((o) => o + 1), 800 + (shop.name.length % 7) * 300);
-    const timer = setInterval(() => setOffset((o) => o + 1), 3500);
-    return () => {
-      clearTimeout(start);
-      clearInterval(timer);
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const slide = () => {
+      const next = pageRef.current + 1;
+      shine.setValue(0);
+      Animated.parallel([
+        Animated.timing(x, { toValue: -next * size, duration: SLIDE_MS, easing: Easing.bezier(0.22, 1, 0.36, 1), useNativeDriver: true }),
+        Animated.timing(shine, { toValue: 1, duration: SLIDE_MS + 300, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start(({ finished }) => {
+        if (!alive || !finished) return;
+        pageRef.current = next;
+        setPage(next);
+        timer = setTimeout(slide, SLIDE_EVERY_MS);
+      });
     };
-  }, [many, shop.name]);
-  const four = Array.from({ length: 4 }, (_, i) => (photos.length ? photos[(offset * 4 + i) % photos.length] : null));
-  const cell = (width - 6 * 3) / 2;
+    // People who turn animations off get still photos.
+    AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
+      if (alive && !reduce) timer = setTimeout(slide, delay);
+    });
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      x.stopAnimation();
+      shine.stopAnimation();
+    };
+  }, [many, size, delay, x, shine]);
+
+  const cell = (size - 6) / 2;
+  const pageOf = (p: number) => (
+    <View key={`p${p}`} style={[styles.tileGrid, styles.slidePage, { left: p * size, width: size }]}>
+      {Array.from({ length: 4 }, (_, i) => {
+        const path = photos.length ? photos[(p * 4 + i) % photos.length] : null;
+        return (
+          <View key={i} style={[styles.tileCell, { width: cell, height: cell }]}>
+            {path ? <ProductImage path={path} style={styles.fill} /> : <Text style={styles.tileEmoji}>🍽️</Text>}
+          </View>
+        );
+      })}
+    </View>
+  );
+
+  return (
+    <View style={[styles.slideWindow, { width: size, height: size }]}>
+      <Animated.View style={[styles.slideStrip, { transform: [{ translateX: x }] }]}>
+        {pageOf(page)}
+        {many && pageOf(page + 1)}
+      </Animated.View>
+      {/* A soft gloss on top, and the sheen that sweeps across with each slide. */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.45 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {many && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.sheen,
+            {
+              width: size * 0.45,
+              height: size * 2,
+              top: -size / 2,
+              transform: [
+                { translateX: shine.interpolate({ inputRange: [0, 1], outputRange: [-size, size * 1.6] }) },
+                { rotate: '18deg' },
+              ],
+            },
+          ]}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
+/**
+ * One shop as a light tile with its items four at a time (sliding to the next four every few
+ * seconds), "+N more" across the middle, and the shop's name under it.
+ */
+export function ShopTile({ shop, photos, total, width }: { shop: Shop; photos: string[]; total: number; width: number }) {
+  // Each tile starts at a different moment, so the grid doesn't move all at once.
+  const delay = 1200 + (shop.name.length % 7) * 400;
   return (
     <Pressable
       accessibilityRole="button"
@@ -157,13 +252,7 @@ export function ShopTile({ shop, photos, total, width }: { shop: Shop; photos: s
       onPress={() => router.push({ pathname: '/shop/[id]', params: { id: shop.id } })}
       style={({ pressed }) => [{ width }, pressed && styles.pressed]}>
       <View style={[styles.tile, !shop.is_open && styles.tileClosed]}>
-        <View style={styles.tileGrid}>
-          {four.map((path, i) => (
-            <View key={i} style={[styles.tileCell, { width: cell, height: cell }]}>
-              {path ? <ProductImage path={path} style={styles.fill} /> : <Text style={styles.tileEmoji}>🍽️</Text>}
-            </View>
-          ))}
-        </View>
+        <SlidingPhotos photos={photos} size={width - 12} delay={delay} />
         {total > 4 && (
           <View style={styles.morePill}>
             <Text style={styles.moreText}>+{total - 4} more</Text>
@@ -420,6 +509,10 @@ const styles = StyleSheet.create({
   tile: { backgroundColor: Storefront.tile, borderRadius: 16, padding: 6 },
   tileClosed: { opacity: 0.6 },
   tileGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  slideWindow: { overflow: 'hidden', borderRadius: 10 },
+  slideStrip: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  slidePage: { position: 'absolute', top: 0, bottom: 0 },
+  sheen: { position: 'absolute', left: 0 },
   tileCell: { backgroundColor: Storefront.tileInner, borderRadius: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   tileEmoji: { fontSize: 22 },
   morePill: {
