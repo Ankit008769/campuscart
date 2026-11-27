@@ -40,7 +40,8 @@ export function QtyControl({ product, variantId, label }: { product: Product; va
 }
 
 export function ProductCard({ product: p }: { product: Product }) {
-  const { favourites, toggleFavourite, alerts, toggleAlert, rules } = useCatalog();
+  const { favourites, toggleFavourite, alerts, toggleAlert, rulesFor } = useCatalog();
+  const rules = rulesFor(p.shop.id);
   const firstInStock = p.variants.find((v) => v.inStock) ?? p.variants[0];
   const [variantId, setVariantId] = useState(firstInStock.id);
   const variant = p.variants.find((v) => v.id === variantId) ?? firstInStock;

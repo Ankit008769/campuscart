@@ -28,7 +28,7 @@ void modesMatch;
 export async function listShops(client: CampusClient) {
   const { data, error } = await client
     .from('shops')
-    .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup, phone')
+    .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup, phone, free_delivery_min_paise')
     .order('is_open', { ascending: false })
     .order('name');
   if (error) throw error;
@@ -57,7 +57,7 @@ export async function getShopMenu(client: CampusClient, shopId: string) {
   const [shop, products] = await Promise.all([
     client
       .from('shops')
-      .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup, phone')
+      .select('id, name, kind, is_open, hours, prep_minutes, rush_until, rush_extra_minutes, does_delivery, does_pickup, phone, free_delivery_min_paise')
       .eq('id', shopId)
       .single(),
     client

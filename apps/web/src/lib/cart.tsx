@@ -81,6 +81,15 @@ export function useCart(): Cart {
 }
 
 /** The bag split by shop, in the order shops were added. */
+/**
+ * The shop whose order carries a multi-shop cart's fees: the biggest share of the cart, as
+ * place_cart picks it (ties by shop id). Its free-delivery minimum decides the delivery fee.
+ */
+export function feeShopId(lines: CartLine[]): string | null {
+  const [first] = linesByShop(lines).sort((a, b) => b.subtotalPaise - a.subtotalPaise || a.shopId.localeCompare(b.shopId));
+  return first?.shopId ?? null;
+}
+
 export function linesByShop(lines: CartLine[]) {
   const groups = new Map<string, { shopId: string; shopName: string; lines: CartLine[]; subtotalPaise: number }>();
   for (const line of lines) {

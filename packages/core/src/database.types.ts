@@ -1617,6 +1617,7 @@ export type Database = {
           created_at: string
           does_delivery: boolean
           does_pickup: boolean
+          free_delivery_min_paise: number | null
           fssai_no: string | null
           gstin: string | null
           hours: Json
@@ -1635,6 +1636,7 @@ export type Database = {
           created_at?: string
           does_delivery?: boolean
           does_pickup?: boolean
+          free_delivery_min_paise?: number | null
           fssai_no?: string | null
           gstin?: string | null
           hours?: Json
@@ -1653,6 +1655,7 @@ export type Database = {
           created_at?: string
           does_delivery?: boolean
           does_pickup?: boolean
+          free_delivery_min_paise?: number | null
           fssai_no?: string | null
           gstin?: string | null
           hours?: Json
@@ -1969,6 +1972,7 @@ export type Database = {
       calculate_bill: {
         Args: {
           p_mode: Database["public"]["Enums"]["order_mode"]
+          p_shop_id?: string
           p_subtotal_paise: number
         }
         Returns: {
