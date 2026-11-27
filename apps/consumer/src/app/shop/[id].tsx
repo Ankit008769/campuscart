@@ -1,6 +1,7 @@
 import {
   describeShopHours,
   effectivePrepMinutes,
+  formatPaise,
   getMyProfile,
   openGroupOrder,
   getShopMenu,
@@ -167,6 +168,7 @@ export default function ShopScreen() {
             {shop.is_open ? `Ready in about ${effectivePrepMinutes(shop)} min` : 'Closed now. You can schedule an order for later'}
             {shop.does_pickup ? ' · Pickup' : ''}
             {hours ? ` · Open ${describeShopHours(hours)}` : ''}
+            {shop.does_delivery && shop.free_delivery_min_paise != null ? ` · Free delivery from ${formatPaise(shop.free_delivery_min_paise)}` : ''}
           </Text>
         </View>
         <CallShop phone={shop.phone} note={shop.is_open ? undefined : 'Closed now: call to ask when it opens, or about an item.'} />

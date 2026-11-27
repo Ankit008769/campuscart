@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { calculateBill, deliveryCharge, deliverySurcharge } from './bill.ts';
+import { DEFAULT_FEE_RULES, calculateBill, deliveryCharge, deliverySurcharge, rulesForShop } from './bill.ts';
 
 test('deliveries under ₹250 pay ₹50 delivery and the ₹4 platform fee', () => {
   const bill = calculateBill(6000, 'delivery');
@@ -46,4 +46,14 @@ test('deliveries to far drop points and at night cost extra; pickups never do', 
   assert.equal(deliverySurcharge({ ...base, at: at('05:59') }), 1500);
   assert.equal(deliverySurcharge({ ...base, at: at('06:00') }), 500);
   assert.equal(deliverySurcharge({ ...base, mode: 'pickup', at: at('23:30') }), 0);
+});
+
+test("a shop's own free-delivery minimum replaces the usual one; no setting keeps it", () => {
+  const sp = rulesForShop(DEFAULT_FEE_RULES, { free_delivery_min_paise: 30000 });
+  assert.equal(sp.smallCartLimitPaise, 30000);
+  assert.equal(calculateBill(28000, 'delivery', sp).smallCartFeePaise, DEFAULT_FEE_RULES.smallCartFeePaise);
+  assert.equal(calculateBill(30000, 'delivery', sp).smallCartFeePaise, 0);
+  assert.equal(calculateBill(28000, 'pickup', sp).smallCartFeePaise, 0);
+  assert.equal(rulesForShop(DEFAULT_FEE_RULES, { free_delivery_min_paise: null }), DEFAULT_FEE_RULES);
+  assert.equal(rulesForShop(DEFAULT_FEE_RULES, undefined), DEFAULT_FEE_RULES);
 });

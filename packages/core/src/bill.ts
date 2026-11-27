@@ -22,6 +22,15 @@ export const DEFAULT_FEE_RULES: FeeRules = {
   platformFeePaise: 400,
 };
 
+/**
+ * The fee rules for one shop's order: its own free-delivery minimum (shops.free_delivery_min_paise)
+ * when it has one, else the usual. Same rule as calculate_bill(…, p_shop_id) in SQL.
+ */
+export function rulesForShop(rules: FeeRules, shop: { free_delivery_min_paise?: number | null } | null | undefined): FeeRules {
+  const own = shop?.free_delivery_min_paise;
+  return own == null ? rules : { ...rules, smallCartLimitPaise: own };
+}
+
 /** What a bill charges for delivery, both parts together, as the screens show it. */
 export const deliveryCharge = (bill: Pick<Bill, 'deliveryFeePaise' | 'smallCartFeePaise'>) =>
   bill.deliveryFeePaise + bill.smallCartFeePaise;

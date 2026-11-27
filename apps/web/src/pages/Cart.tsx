@@ -3,13 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { ShopBills } from '../components/ShopBills';
 import { useAuth } from '../lib/auth';
-import { linesByShop, useCart } from '../lib/cart';
+import { feeShopId, linesByShop, useCart } from '../lib/cart';
 import { useCatalog } from '../lib/catalog';
 
 export function Cart() {
   const cart = useCart();
   const { session } = useAuth();
-  const { rules } = useCatalog();
+  const { rulesFor } = useCatalog();
+  // The fee-carrying shop's own free-delivery minimum, when it has one.
+  const rules = rulesFor(feeShopId(cart.lines));
   const navigate = useNavigate();
   const bill = calculateBill(cart.subtotalPaise, 'delivery', rules);
   const delivery = bill.deliveryFeePaise + bill.smallCartFeePaise;

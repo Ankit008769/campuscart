@@ -3,14 +3,16 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ShopBills } from './ShopBills';
-import { useCart } from '../lib/cart';
+import { feeShopId, useCart } from '../lib/cart';
 import { useCatalog } from '../lib/catalog';
 
 /** The bag slides in from the right, as on the old site. Totals are an estimate until checkout. */
 export function CartDrawer({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const cart = useCart();
-  const { rules } = useCatalog();
+  const { rulesFor } = useCatalog();
+  // The fee-carrying shop's own free-delivery minimum, when it has one.
+  const rules = rulesFor(feeShopId(cart.lines));
   const navigate = useNavigate();
   const bill = calculateBill(cart.subtotalPaise, 'delivery', rules);
 

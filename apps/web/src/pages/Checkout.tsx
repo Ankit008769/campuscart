@@ -31,7 +31,7 @@ const messageOf = (e: unknown) => (e instanceof Error ? e.message : 'Something w
 export function Checkout() {
   const cart = useCart();
   const { session, profile, reloadProfile } = useAuth();
-  const { rules, liveVersion } = useCatalog();
+  const { rules, rulesFor, liveVersion } = useCatalog();
   const { dropPoints, dropPointId, setDropPointId } = useDropPoint();
   const navigate = useNavigate();
 
@@ -68,7 +68,7 @@ export function Checkout() {
   if (!session) return <Navigate to="/login?redirect=/checkout" replace />;
   if (!cart.count && !placing) return <Navigate to="/cart" replace />;
 
-  const preview = routes ? previewCart(routes, mode, rules) : null;
+  const preview = routes ? previewCart(routes, mode, rules, rulesFor) : null;
   const primary = preview?.shops[0];
   const point = dropPoints.find((p) => p.id === dropPointId);
   const surcharge = deliverySurcharge({

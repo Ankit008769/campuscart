@@ -36,7 +36,16 @@ export type CartPreview = {
 };
 
 /** Groups routed lines by shop and works out the cart's fees once, as place_cart will. */
-export function previewCart(routes: CartRoute[], mode: OrderMode, rules: FeeRules): CartPreview {
+/**
+ * `rulesFor` gives a shop's own rules (rulesForShop): the shop with the biggest share of the cart
+ * carries the cart's fees, as place_cart does, so its free-delivery minimum applies.
+ */
+export function previewCart(
+  routes: CartRoute[],
+  mode: OrderMode,
+  rules: FeeRules,
+  rulesFor: (shopId: string) => FeeRules = () => rules,
+): CartPreview {
   const groups = new Map<string, CartPreview['shops'][number]>();
   for (const route of routes) {
     if (route.problem || !route.shop_id || route.price_paise === null) continue;
@@ -49,7 +58,7 @@ export function previewCart(routes: CartRoute[], mode: OrderMode, rules: FeeRule
   const subtotal = shops.reduce((t, s) => t + s.subtotalPaise, 0);
   return {
     shops,
-    bill: calculateBill(subtotal, mode, rules),
+    bill: calculateBill(subtotal, mode, shops[0] ? rulesFor(shops[0].shopId) : rules),
     problems: routes.flatMap((r) => (r.problem ? [r.problem] : [])),
   };
 }

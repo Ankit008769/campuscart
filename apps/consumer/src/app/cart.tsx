@@ -9,6 +9,7 @@ import {
   getMyProfile,
   listDropPoints,
   placeOrder,
+  rulesForShop,
   type FeeRules,
   type OrderMode,
   type PayMethod,
@@ -33,6 +34,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
 import { logStep } from '@/lib/events';
+import { useMenus } from '@/lib/menus';
 import { supabase } from '@/lib/supabase';
 import { PhoneRequired } from '@/components/phone-required';
 import { KeyboardScroll } from '@/components/keyboard-scroll';
@@ -51,6 +53,7 @@ export default function CartScreen() {
   const userId = session?.user.id;
   const shop = cart.shop;
   const needsPhone = useNeedsPhone();
+  const { shops } = useMenus();
 
   const [mode, setMode] = useState<OrderMode>(shop?.doesDelivery === false ? 'pickup' : 'delivery');
   const [dropPointId, setDropPointId] = useState<string | null>(null);
@@ -103,7 +106,8 @@ export default function CartScreen() {
   // Several shops, or products CampusCart picks the shop for: one order per shop.
   if (!shop) return <MultiShopCheckout />;
 
-  const rules = feeRules ?? DEFAULT_FEE_RULES;
+  // The shop's own free-delivery minimum, when it has one (shops.free_delivery_min_paise).
+  const rules = rulesForShop(feeRules ?? DEFAULT_FEE_RULES, shops?.find((s) => s.id === shop.id));
   const chosenPoint = dropPoints?.find((p) => p.id === dropPointId);
   const bill = calculateBill(cart.subtotalPaise, mode, rules);
   const discount = Math.min(coupon?.discountPaise ?? 0, bill.subtotalPaise);

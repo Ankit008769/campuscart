@@ -7,6 +7,7 @@ import {
   listShops,
   listStockAlertVariantIds,
   productPhotoUrl,
+  rulesForShop,
   setFavourite,
   setStockAlert,
   watchCatalog,
@@ -40,6 +41,8 @@ type Catalog = {
   shops: Shop[];
   /** Delivery and platform fees as admins set them (fee_rules); the database charges these. */
   rules: FeeRules;
+  /** One shop's rules: its own free-delivery minimum when it has one (shops.free_delivery_min_paise). */
+  rulesFor: (shopId: string | null | undefined) => FeeRules;
   products: Product[];
   ratings: Map<string, { average: number; ratings: number }>;
   loading: boolean;
@@ -181,6 +184,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     () => ({
       shops,
       rules,
+      rulesFor: (shopId: string | null | undefined) => rulesForShop(rules, shops.find((s) => s.id === shopId)),
       products,
       ratings,
       loading,
